@@ -1,0 +1,18 @@
+Package: grapple
+Title: R Package for MR Framework GRAPPLE 
+Version: 0.0.0.9000
+Authors@R: person("Jingshu", "Wang", email = "first.last@example.com", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
+Depends: R (>= 3.4.0)
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports:
+    ggplot2,
+    biomaRt,
+    rsnps,
+    GenomicRanges,
+    TxDb.Hsapiens.UCSC.hg38.knownGene,
+    GenomicFeatures,
+    nortest
+RoxygenNote: 6.0.1
