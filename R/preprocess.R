@@ -182,7 +182,7 @@ getInput <- function(sel.files,
 calCor <- function(sel.files,
                    exp.files,
                    out.file, 
-                   plink_exe, refdat, 
+                   plink_exe, refdat, no.clumping = T,
                    p.thres = 0.5, clump.directly = F,
                    seed.vec = 1:20) {
   sel.SNPs <- NULL
@@ -280,23 +280,29 @@ calCor <- function(sel.files,
   rm(temp)
   gc()
 
-
-  if (!clump.directly) {
-    corr.list <- lapply(seed.vec, function(seed) {
-                        set.seed(seed)
-                        print(paste("Seed is:", seed))
-                        data.sel <- data.frame(SNP = sel.SNPs, pval = runif(length(sel.SNPs)))
-                        data.sel <- suppressMessages(plink_clump(data.sel, plink_exe, refdat))
-                        data.exp1 <- data.exp[as.character(data.sel$SNP), , drop = F]
-                        rm(data.sel)
-                        corr <- cor(data.exp1)
-                        rm(data.exp1)
-                        gc()
-                        return(corr)
-                                     })
-    corr <- Reduce("+", corr.list)/length(corr.list)
-  } else
-    corr <- cor(data.exp)
+  if (no.clumping) {
+    temp <- as.matrix(data.exp)
+    covv <- t(temp) %*% temp / nrow(temp)
+    varr <- colMeans(temp^2)
+    corr <- t(covv / sqrt(varr))/sqrt(varr)
+  } else {
+    if (!clump.directly) {
+      corr.list <- lapply(seed.vec, function(seed) {
+                          set.seed(seed)
+                          print(paste("Seed is:", seed))
+                          data.sel <- data.frame(SNP = sel.SNPs, pval = runif(length(sel.SNPs)))
+                          data.sel <- suppressMessages(plink_clump(data.sel, plink_exe, refdat))
+                          data.exp1 <- data.exp[as.character(data.sel$SNP), , drop = F]
+                          rm(data.sel)
+                          corr <- cor(data.exp1)
+                          rm(data.exp1)
+                          gc()
+                          return(corr)
+                   })
+      corr <- Reduce("+", corr.list)/length(corr.list)
+    } else
+      corr <- cor(data.exp)
+  }
 
   
   return(corr)
