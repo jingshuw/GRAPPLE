@@ -182,7 +182,7 @@ getInput <- function(sel.files,
 calCor <- function(sel.files,
                    exp.files,
                    out.file, 
-                   plink_exe, refdat, no.clumping = T,
+                   plink_exe = NULL, refdat = NULL, no.clumping = T,
                    p.thres = 0.5, clump.directly = F,
                    seed.vec = 1:20) {
   sel.SNPs <- NULL

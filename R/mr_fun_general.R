@@ -3,7 +3,8 @@
 #' @param b_exp A matrix of size \code{p * k} for the effect sizes of \code{p} number of independent SNPs on \code{k} risk factors
 #' @param b_out A vector of length \code{p} for the effect sizes of the \code{p} SNPs on the outcome
 #' @param se_exp A matrix of size \code{p * k} for the standard deviations of the effect sizes in \code{b_exp} 
-#' @param se_out A vector of length \code{p} for the standard deviations of the effect sizes in \code{b_out} 
+#' @param se_out A vector of length \code{p} for the standard deviations of the effect sizes in \code{b_out}
+#' @param tau2 The dispersion parameter, by default to be estimated from the function
 #' @param cor.mat Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The correlation matrix of estimated effect sizes on the \code{k} risk factors and the outcome. Default is NULL, for the identity matrix
 #' @param loss.function Loss function used, one of "l2", "huber" and "tukey"
 #' @param k Tuning parameters of the loss function, for loss "l2", it is NA, for loss "huber", default is 1.345 and for loss "tukey", default is 4.685
@@ -14,7 +15,8 @@
 #' @import nortest
 #' @export
 grappleRobustEst <- function(b_exp, b_out, 
-                             se_exp, se_out, 
+                             se_exp, se_out,
+                             tau2 = NULL,
                              cor.mat = NULL, 
                              loss.function = c("l2", "huber", "tukey"), 
                              k = switch(loss.function[1], 
@@ -72,7 +74,10 @@ grappleRobustEst <- function(b_exp, b_out,
 
 
     ## Initialize
-    tau2.hat <- 0
+    if (is.null(tau2))
+      tau2.hat <- 0
+    else
+      tau2.hat <- tau2
     bound.beta <- apply(abs(b_out / b_exp), 2, function(v)quantile(v[is.finite(v)], probs = 0.95, na.rm = T)) * 2
     bound.tau2 <- quantile(se_out^2, 0.95, na.rm = T) * 2
     print(bound.tau2)
@@ -99,9 +104,11 @@ grappleRobustEst <- function(b_exp, b_out,
  #   beta.hat <- beta.hat + rnorm(length(beta.hat), bound.beta * 0.05)
 
     for (iter in 1:niter) {
-        beta.hat.old <- beta.hat
-        tau2.hat.old <- tau2.hat
+      beta.hat.old <- beta.hat
+      tau2.hat.old <- tau2.hat
+      if (is.null(tau2)) {
         temp <- robust.E(beta.hat, 0)
+
         if (temp < 0)
           tau2.hat <- 0
         else
@@ -109,6 +116,7 @@ grappleRobustEst <- function(b_exp, b_out,
                                        bound.tau2 * c(0, 1), extendInt = "downX", 
                                        tol = bound.tau2 * .Machine$double.eps^0.25)$root, 
                                error = function(e) {warning("Did not find a solution for tau2."); 0})
+      }
 
    #     if (tau2.hat < 0) {
    #         tau2.hat <- 0
@@ -158,14 +166,16 @@ grappleRobustEst <- function(b_exp, b_out,
     for(s in 1:5) {
       beta.hat.old <- beta.hat
       tau2.hat.old <- tau2.hat
-      temp <- robust.E(beta.hat, 0)
-      if (temp < 0)
-        tau2.hat <- 0
-      else
-        tau2.hat <- tryCatch(uniroot(function(tau2) sum(robust.E(beta.hat, tau2)), 
-                                         bound.tau2 * c(0, 1), extendInt = "downX", 
-                                         tol = bound.tau2 * .Machine$double.eps^0.25)$root, 
-                                 error = function(e) {warning("Did not find a solution for tau2."); 0})
+      if (is.null(tau2)) {
+        temp <- robust.E(beta.hat, 0)
+        if (temp < 0)
+          tau2.hat <- 0
+        else
+          tau2.hat <- tryCatch(uniroot(function(tau2) sum(robust.E(beta.hat, tau2)), 
+                                       bound.tau2 * c(0, 1), extendInt = "downX", 
+                                       tol = bound.tau2 * .Machine$double.eps^0.25)$root, 
+                               error = function(e) {warning("Did not find a solution for tau2."); 0})
+      }
       temp.fun <- function(bb, idx, beta.hat.temp = beta.hat) {
         beta.hat.temp[idx] <- bb
         return(robust.optfun.fixtau(beta.hat.temp, tau2=tau2.hat))
@@ -192,12 +202,12 @@ grappleRobustEst <- function(b_exp, b_out,
     if (s == 5)
       warning("Did not converge in the final step. May not find the global optimal point.")
 
-    if (tau2.hat > bound.tau2) {
+    if (is.null(tau2) && tau2.hat > bound.tau2) {
       warning("Estimated overdispersion seems abnormaly large.")
     }
 
  
-    if ((tau2.hat <= min(se_out^2) / 5) && (!suppress.warning)) {
+    if (is.null(tau2) && (tau2.hat <= min(se_out^2) / 5) && (!suppress.warning)) {
         warning("The estimated overdispersion parameter is very small. 
                 Consider using the simple model without overdispersion.")
     }
