@@ -176,7 +176,7 @@ getInput <- function(sel.files,
 #'
 #' @inheritParams getInput
 #' @param p.thres The lower threshold of the p-values for a SNP to be used in calculating the correlation matrix
-#' @param seed.vec A length \code{m} vector of seeds used. In order to get a stable estimate of the correlation matrix, we take the average of \code{m} numbers of estimated correlation matrix weather each estimate use a randomly sampled clumped set of SNPs. 
+#' @param seed.vec A length \code{m} vector of seeds used if clumping method is used. In order to get a stable estimate of the correlation matrix, we take the average of \code{m} numbers of estimated correlation matrix weather each estimate use a randomly sampled clumped set of SNPs. 
 #'
 #' @export
 calCor <- function(sel.files,

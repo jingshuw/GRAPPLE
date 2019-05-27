@@ -23,7 +23,8 @@ grappleRobustEst <- function(b_exp, b_out,
                              suppress.warning = FALSE, 
                              diagnosis = FALSE,
                              niter = 20, 
-                             tol = .Machine$double.eps^0.5) {
+                             tol = .Machine$double.eps^0.5,
+                             opt.method = "L-BFGS-B") {
 
     b_exp <- as.matrix(b_exp)
     se_exp <- as.matrix(se_exp)
@@ -74,6 +75,7 @@ grappleRobustEst <- function(b_exp, b_out,
     tau2.hat <- 0
     bound.beta <- apply(abs(b_out / b_exp), 2, function(v)quantile(v[is.finite(v)], probs = 0.95, na.rm = T)) * 2
     bound.tau2 <- quantile(se_out^2, 0.95, na.rm = T) * 2
+    print(bound.tau2)
     if (ncol(b_exp) == 1) {
       beta.seq <- seq(-bound.beta, bound.beta, length.out = 5000)
       beta.hat <- beta.seq[which.max(sapply(beta.seq, robust.optfun.fixtau, tau2 = 0))]
@@ -94,32 +96,39 @@ grappleRobustEst <- function(b_exp, b_out,
       }
     }
 
-
+ #   beta.hat <- beta.hat + rnorm(length(beta.hat), bound.beta * 0.05)
 
     for (iter in 1:niter) {
         beta.hat.old <- beta.hat
         tau2.hat.old <- tau2.hat
-        tau2.hat <- tryCatch(uniroot(function(tau2) sum(robust.E(beta.hat, tau2)), 
-                                     bound.tau2 * c(0, 1), extendInt = "downX", 
-                                     tol = bound.tau2 * .Machine$double.eps^0.25)$root, 
-                             error = function(e) {warning("Did not find a solution for tau2."); 0})
+        temp <- robust.E(beta.hat, 0)
+        if (temp < 0)
+          tau2.hat <- 0
+        else
+          tau2.hat <- tryCatch(uniroot(function(tau2) sum(robust.E(beta.hat, tau2)), 
+                                       bound.tau2 * c(0, 1), extendInt = "downX", 
+                                       tol = bound.tau2 * .Machine$double.eps^0.25)$root, 
+                               error = function(e) {warning("Did not find a solution for tau2."); 0})
 
-        if (tau2.hat < 0) {
-            tau2.hat <- 0
+   #     if (tau2.hat < 0) {
+   #         tau2.hat <- 0
         
-        }
-    #    print(tau2.hat)
-        if (tau2.hat > bound.tau2 * 0.95) {
-            warning("Estimated overdispersion seems abnormaly large.")
-        }
-        if (length(beta.hat) == 1) {
-          beta.hat <- beta.seq[which.max(sapply(beta.seq, robust.optfun.fixtau, tau2 = tau2.hat))]
-           
-
+   #     }
+   #     print(tau2.hat)
+        if (opt.method == "L-BFGS-B") {
+          beta.hat <- optim(beta.hat, function(beta) robust.optfun.fixtau(beta, tau2.hat),
+                            method = opt.method, lower = -bound.beta, upper = bound.beta, 
+                            control = list(fnscale = -1))$par
         } else
           beta.hat <- optim(beta.hat, function(beta) robust.optfun.fixtau(beta, tau2.hat),
-                            method = "L-BFGS-B", lower = -bound.beta, upper = bound.beta, 
-                          control = list(fnscale = -1))$par
+                            method = opt.method, #lower = -bound.beta, upper = bound.beta, 
+                            control = list(fnscale = -1))$par
+        if (length(beta.hat) == 1) {
+          beta.hat.temp <- beta.seq[which.max(sapply(beta.seq, robust.optfun.fixtau, tau2 = tau2.hat))]
+          if (robust.optfun.fixtau(beta.hat.temp, tau2.hat) > robust.optfun.fixtau(beta.hat, tau2.hat))
+            beta.hat <- beta.hat.temp
+        } 
+        
         int.extend <- 0
         while (abs(beta.hat) > 0.95 * bound.beta && int.extend <= niter) {
             int.extend <- int.extend + 1
@@ -145,30 +154,49 @@ grappleRobustEst <- function(b_exp, b_out,
 
     ## final round of coordinate-wise grid-search optimization to make the non-convex optimization 
     ## more likely reach a global optimal point
+
     for(s in 1:5) {
-      tau2.hat <- tryCatch(uniroot(function(tau2) sum(robust.E(beta.hat, tau2)), 
-                                   bound.tau2 * c(0, 1), extendInt = "downX", 
-                                   tol = bound.tau2 * .Machine$double.eps^0.25)$root, 
-                           error = function(e) {warning("Did not find a solution for tau2."); 0})
-      if (tau2.hat < 0) {
+      beta.hat.old <- beta.hat
+      tau2.hat.old <- tau2.hat
+      temp <- robust.E(beta.hat, 0)
+      if (temp < 0)
         tau2.hat <- 0
-
-      }
-
+      else
+        tau2.hat <- tryCatch(uniroot(function(tau2) sum(robust.E(beta.hat, tau2)), 
+                                         bound.tau2 * c(0, 1), extendInt = "downX", 
+                                         tol = bound.tau2 * .Machine$double.eps^0.25)$root, 
+                                 error = function(e) {warning("Did not find a solution for tau2."); 0})
       temp.fun <- function(bb, idx, beta.hat.temp = beta.hat) {
         beta.hat.temp[idx] <- bb
         return(robust.optfun.fixtau(beta.hat.temp, tau2=tau2.hat))
       }
-
-      for (i in 1:length(beta.hat)) {
-        bb <- beta.hat[i] * 50
-        beta.seq <- seq(-abs(bb), abs(bb), length.out = 3000)
-        beta.hat[i] <- beta.seq[which.max(sapply(beta.seq, temp.fun, idx = i, beta.hat.temp = beta.hat))]
+      for (h in 1:5) {
+        beta.temp <- beta.hat
+        for (i in 1:length(beta.hat)) {
+          bb <- beta.hat[i] * 50
+          beta.seq <- seq(-abs(bb), abs(bb), length.out = 5000)
+          tt <- beta.hat
+          tt[i] <- beta.seq[which.max(sapply(beta.seq, temp.fun, idx = i, beta.hat.temp = beta.hat))]
+          if (robust.optfun.fixtau(tt, tau2.hat) > robust.optfun.fixtau(beta.hat, tau2.hat))
+            beta.hat <- tt
+        }
+        if (max(abs(beta.hat.old - beta.hat) / abs(beta.hat + 1e-10)) <= tol)
+          break
       }
-
-
+      if (max(abs(beta.hat.old - beta.hat) / abs(beta.hat + 1e-10)) + 
+          abs(tau2.hat.old - tau2.hat) / abs(tau2.hat + 1e-10) <= tol) {
+        break
+      }
     }
 
+    if (s == 5)
+      warning("Did not converge in the final step. May not find the global optimal point.")
+
+    if (tau2.hat > bound.tau2) {
+      warning("Estimated overdispersion seems abnormaly large.")
+    }
+
+ 
     if ((tau2.hat <= min(se_out^2) / 5) && (!suppress.warning)) {
         warning("The estimated overdispersion parameter is very small. 
                 Consider using the simple model without overdispersion.")
