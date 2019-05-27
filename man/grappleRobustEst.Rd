@@ -4,10 +4,11 @@
 \alias{grappleRobustEst}
 \title{Robust multivariate MR estimation}
 \usage{
-grappleRobustEst(b_exp, b_out, se_exp, se_out, cor.mat = NULL,
+grappleRobustEst(b_exp, b_out, se_exp, se_out, tau2 = NULL, cor.mat = NULL,
   loss.function = c("l2", "huber", "tukey"), k = switch(loss.function[1], l2
   = NA, huber = 1.345, tukey = 4.685), suppress.warning = FALSE,
-  diagnosis = FALSE, niter = 20, tol = .Machine$double.eps^0.5)
+  diagnosis = FALSE, niter = 20, tol = .Machine$double.eps^0.5,
+  opt.method = "L-BFGS-B")
 }
 \arguments{
 \item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of independent SNPs on \code{k} risk factors}
@@ -17,6 +18,8 @@ grappleRobustEst(b_exp, b_out, se_exp, se_out, cor.mat = NULL,
 \item{se_exp}{A matrix of size \code{p * k} for the standard deviations of the effect sizes in \code{b_exp}}
 
 \item{se_out}{A vector of length \code{p} for the standard deviations of the effect sizes in \code{b_out}}
+
+\item{tau2}{The dispersion parameter, by default to be estimated from the function}
 
 \item{cor.mat}{Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The correlation matrix of estimated effect sizes on the \code{k} risk factors and the outcome. Default is NULL, for the identity matrix}
 

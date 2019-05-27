@@ -4,8 +4,8 @@
 \alias{calCor}
 \title{Calculate the \code{(k + 1)} by \code{(k + 1)} correlation matrix between the \code{k} risk factors and the outcome}
 \usage{
-calCor(sel.files, exp.files, out.file, plink_exe, refdat, p.thres = 0.5,
-  clump.directly = F, seed.vec = 1:20)
+calCor(sel.files, exp.files, out.file, plink_exe = NULL, refdat = NULL,
+  no.clumping = T, p.thres = 0.5, clump.directly = F, seed.vec = 1:20)
 }
 \arguments{
 \item{sel.files}{A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors SNP selection. Each GWAS file is an ".rda" or ".rData" file containing an R object of name "dat". The "dat" object is a data frame that at least has a column "SNP" for the SNP ids, "pval" for the p-values.}
@@ -20,7 +20,7 @@ calCor(sel.files, exp.files, out.file, plink_exe, refdat, p.thres = 0.5,
 
 \item{clump.directly}{Whether the clump is done directly on the union of selection files SNPs, or the intersection of the SNPs in any of the selection files, the SNPs in any of the exposure files and the SNPs in the outcome GWAS data file. Default is FALSE}
 
-\item{seed.vec}{A length \code{m} vector of seeds used. In order to get a stable estimate of the correlation matrix, we take the average of \code{m} numbers of estimated correlation matrix weather each estimate use a randomly sampled clumped set of SNPs.}
+\item{seed.vec}{A length \code{m} vector of seeds used if clumping method is used. In order to get a stable estimate of the correlation matrix, we take the average of \code{m} numbers of estimated correlation matrix weather each estimate use a randomly sampled clumped set of SNPs.}
 }
 \description{
 We use the SNPs that has no/very weak effect on the risk factors to estimate the shared correlation matrix acrooss SNPs
