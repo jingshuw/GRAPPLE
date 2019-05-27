@@ -19,13 +19,13 @@
 #'
 #' @return A list of the modes, RAP plot and the markers
 #'
-#' @import ggplot2 
-#' @import biomaRt 
-#' @import rsnps 
-#' @import GenomicRanges 
-#' @import TxDb.Hsapiens.UCSC.hg38.knownGene 
-#' @import GenomicFeatures
-#' @import IRanges
+##' @import ggplot2 
+##' @import biomaRt 
+##' @import rsnps 
+##' @import GenomicRanges 
+##' @import TxDb.Hsapiens.UCSC.hg38.knownGene 
+##' @import GenomicFeatures
+##' @import IRanges
 #' @export
 findModes <- function(b_exp, b_out, 
                       se_exp, se_out, 
