@@ -144,7 +144,7 @@ findModes <- function(b_exp, b_out,
     print("ensembl data loaded!")
 
 
-    snp_ids = rownames(markers)
+    snp_ids <- rownames(markers)
 
  #   require(rsnps)
  #   require(GenomicRanges)
@@ -157,6 +157,7 @@ findModes <- function(b_exp, b_out,
     snp_locs0$Gene <- snp_locs0$gene2
 
     snp_locs0 <- snp_locs0[!is.na(snp_locs0$chr), ]
+    markers <- markers[paste0("rs", snp_locs0$snp_id), ]
 
     snp_locs <- try(GenomicRanges::GRanges(seqnames = paste("chr", snp_locs0$chr, sep = ""), 
                             ranges = IRanges::IRanges(start = as.numeric(snp_locs0$BP), width = 1)))
