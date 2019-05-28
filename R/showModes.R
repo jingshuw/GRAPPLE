@@ -149,9 +149,17 @@ findModes <- function(b_exp, b_out,
  #   require(rsnps)
  #   require(GenomicRanges)
     ## find the location of SNPs
-    snp_locs0 <- rsnps::ncbi_snp_query(snp_ids)
-    snp_locs <- try(GenomicRanges::GRanges(seqnames = paste("chr", snp_locs0$Chromosome, sep = ""), 
-                            ranges = IRanges::IRanges(start = snp_locs0$BP, width = 1)))
+  #  snp_locs0 <- as.data.frame(t(sapply(snp_ids, function(id)rsnps::ncbi_snp_query(id))))
+    snp_locs0 <- rsnps::ncbi_snp_summary(snp_ids)[, c("snp_id", "chrpos", "gene2")]
+    temp <- strsplit(snp_locs0$chrpos, split = ":")
+    snp_locs0$chr <- as.numeric(sapply(temp, function(v)v[1]))
+    snp_locs0$BP <- as.numeric(sapply(temp, function(v)v[2]))
+    snp_locs0$Gene <- snp_locs0$gene2
+
+    snp_locs0 <- snp_locs0[!is.na(snp_locs0$chr), ]
+
+    snp_locs <- try(GenomicRanges::GRanges(seqnames = paste("chr", snp_locs0$chr, sep = ""), 
+                            ranges = IRanges::IRanges(start = as.numeric(snp_locs0$BP), width = 1)))
 
     if (class(snp_locs) != "try-error") {
 
@@ -189,7 +197,7 @@ findModes <- function(b_exp, b_out,
     }
 
     markers$nearest_gene <- hgnc.names
-    markers$Chromosome <- as.numeric(snp_locs0$Chromosome)
+    markers$Chromosome <- as.numeric(snp_locs0$chr)
     markers$BP <- as.numeric(snp_locs0$BP)
     markers$inside_gene <- snp_locs0$Gene 
     #   markers <- cbind(markers, as.data.frame(snp_locs0[, -1]))

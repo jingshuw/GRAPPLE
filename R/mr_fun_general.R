@@ -80,7 +80,7 @@ grappleRobustEst <- function(b_exp, b_out,
       tau2.hat <- tau2
     bound.beta <- apply(abs(b_out / b_exp), 2, function(v)quantile(v[is.finite(v)], probs = 0.95, na.rm = T)) * 2
     bound.tau2 <- quantile(se_out^2, 0.95, na.rm = T) * 2
-    print(bound.tau2)
+  #  print(bound.tau2)
     if (ncol(b_exp) == 1) {
       beta.seq <- seq(-bound.beta, bound.beta, length.out = 5000)
       beta.hat <- beta.seq[which.max(sapply(beta.seq, robust.optfun.fixtau, tau2 = 0))]
@@ -262,11 +262,15 @@ grappleRobustEst <- function(b_exp, b_out,
         }
     }
 
+   if (is.null(tau2))
+     tau2.se <- sqrt(asymp.var[nrow(asymp.var), nrow(asymp.var)])
+   else
+     tau2.se <- NA
 
     out <- list(beta.hat = beta.hat,
                 tau2.hat = tau2.hat,
                 beta.var = asymp.var[1:ncol(b_exp), 1:ncol(b_exp)],
-                tau2.se = sqrt(asymp.var[nrow(asymp.var), nrow(asymp.var)]), # / sqrt(efficiency),
+                tau2.se = tau2.se, # / sqrt(efficiency),
                 beta.p.value = pmin(1, 2 * pnorm(abs(beta.hat) / sqrt(diag(asymp.var)[1:r]), 
                                                  lower.tail = F)))# / sqrt(efficiency),
    if (diagnosis) {
