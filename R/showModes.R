@@ -101,7 +101,6 @@ findModes <- function(b_exp, b_out,
   if (is.null(beta.mode))
     beta.mode <- beta.seq[mode.pos]
 
-  print(paste("The modes of beta are:", paste(beta.mode, collapse = ",")))
   res.mat <- sapply(beta.mode, function(beta) t_fun_st(beta,0))
   if (length(beta.mode) == 1)
     res.mat <- as.matrix(res.mat)
@@ -114,6 +113,9 @@ findModes <- function(b_exp, b_out,
   markers <- as.data.frame(abs(res.mat[ss, , drop = F]) < include.thres)
 
   keep.mode <- colSums(markers) > 0
+
+  print(paste("The modes of beta are:", paste(beta.mode[keep.mode], collapse = ",")))
+
 
   markers <- markers[, keep.mode, drop = F]
 
