@@ -179,7 +179,10 @@ findModes <- function(b_exp, b_out,
       ans <- unique(biomaRt::getBM(attributes = c("hgnc_symbol", "entrezgene"),    
                           filters = "entrezgene",
                           values = genes,
-                          mart = ensembl) )
+                          mart = ensembl))
+      temp <- table(ans$entrezgene)
+      gg <- rownames(temp[temp == 1])
+      ans <- ans[ans$entrezgene %in% gg, ]
       #print(ans)
       rownames(ans) <- ans$entrezgene
       ans <- ans[genes, ]
