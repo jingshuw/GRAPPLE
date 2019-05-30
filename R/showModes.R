@@ -176,10 +176,14 @@ findModes <- function(b_exp, b_out,
       #  print(genes)
 
       ## map the gene IDs
-      ans <- unique(biomaRt::getBM(attributes = c("hgnc_symbol", "entrezgene"),    
+      ans <- try(unique(biomaRt::getBM(attributes = c("hgnc_symbol", "entrezgene"),    
                           filters = "entrezgene",
                           values = genes,
-                          mart = ensembl))
+                          mart = ensembl)))
+      if (class(ans) == "try-error") {
+        hgnc.names <- rep("NA", nrow(markers))
+        entrez.names <- hgnc.names
+      } else {
       temp <- table(ans$entrezgene)
       gg <- rownames(temp[temp == 1])
       ans <- ans[ans$entrezgene %in% gg, ]
@@ -195,7 +199,7 @@ findModes <- function(b_exp, b_out,
                               function(k) {
                                 temp <- rr[rr[, 1] == k, 4]
                                 paste(temp[!is.na(temp)], collapse = "/")})
-    } else {
+    }} else {
       hgnc.names <- rep("NA", nrow(markers))
       entrez.names <- hgnc.names
     }
