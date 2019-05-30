@@ -225,7 +225,7 @@ findModes <- function(b_exp, b_out,
 
   #   print(markers)
 
-  try(markers <- markers[do.call("order", -markers[, 1:sum(keep.mode)]),, drop = F])
+  try(markers <- markers[do.call("order", -markers[, 1:sum(keep.mode), drop = F]),, drop = F])
 
 
 
