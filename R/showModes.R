@@ -97,24 +97,6 @@ findModes <- function(b_exp, b_out,
   temp.data <- data.frame(beta = beta.seq, likelihood = val)
 
 
-  p <- ggplot2::ggplot(aes(x = beta, y = likelihood), data = temp.data) + geom_line() + 
-  geom_vline(xintercept = 0) + 
-  geom_vline(xintercept = beta.seq[mode.pos], color = "red", linetype = "dashed") + 
-  labs(y = "RAP lieklihood") +
-  annotate("text", x = mode.lmts[1] * 0.75 + mode.lmts[2] * 0.25,
-           y = sum(range(temp.data$likelihood) * c(0.25, 0.75)), label = paste(length(b_out), "SNPs")) + 
-      theme(axis.line = element_line(linetype = "solid"),          
-      #   axis.text.x=element_blank(),
-      axis.text.y=element_blank(),
-      axis.ticks.y=element_blank(),
-      #    axis.title.x= element_blank(),
-      #   axis.title.y="sss",
-      legend.position="none",
-      panel.background=element_blank(),
-      panel.border=element_blank(),
-      panel.grid.major=element_blank(),
-      panel.grid.minor=element_blank(),
-      plot.background=element_blank())
 
   if (is.null(beta.mode))
     beta.mode <- beta.seq[mode.pos]
@@ -134,6 +116,27 @@ findModes <- function(b_exp, b_out,
   keep.mode <- colSums(markers) > 0
 
   markers <- markers[, keep.mode, drop = F]
+
+  p <- ggplot2::ggplot(aes(x = beta, y = likelihood), data = temp.data) + geom_line() + 
+  geom_vline(xintercept = 0) + 
+  geom_vline(xintercept = beta.mode[keep.mode], color = "red", linetype = "dashed") + 
+  geom_vline(xintercept = beta.mode[!keep.mode], color = "gray", linetype = "dashed") + 
+  labs(y = "RAP lieklihood") +
+  annotate("text", x = mode.lmts[1] * 0.75 + mode.lmts[2] * 0.25,
+           y = sum(range(temp.data$likelihood) * c(0.25, 0.75)), label = paste(length(b_out), "SNPs")) + 
+      theme(axis.line = element_line(linetype = "solid"),          
+      #   axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks.y=element_blank(),
+      #    axis.title.x= element_blank(),
+      #   axis.title.y="sss",
+      legend.position="none",
+      panel.background=element_blank(),
+      panel.border=element_blank(),
+      panel.grid.major=element_blank(),
+      panel.grid.minor=element_blank(),
+      plot.background=element_blank())
+
 
   if (ncol(markers) <= 1)
     map.marker <- F
@@ -225,7 +228,8 @@ findModes <- function(b_exp, b_out,
 
 
   return(list(fun = robust.optfun.fixtau,
-              modes = beta.seq[mode.pos],
+              modes = beta.mode[keep.mode],
+              raw.modes = beta.mode, 
               p = p,
               markers = markers,
             #  markers.full = markers.full,
