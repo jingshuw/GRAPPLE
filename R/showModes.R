@@ -131,7 +131,11 @@ findModes <- function(b_exp, b_out,
 
   markers <- as.data.frame(abs(res.mat[ss, , drop = F]) < include.thres)
 
-  if (ncol(markers) == 1)
+  keep.mode <- colSums(markers) > 0
+
+  markers <- markers[, keep.mode, drop = F]
+
+  if (ncol(markers) <= 1)
     map.marker <- F
   if (map.marker) {
 
@@ -216,7 +220,7 @@ findModes <- function(b_exp, b_out,
 
   #   print(markers)
 
-  markers <- markers[order(markers[, 1]), , drop = F]
+  try(markers <- markers[do.call("order", -markers),, drop = F])
 
 
 
