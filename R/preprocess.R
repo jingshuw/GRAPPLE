@@ -282,8 +282,9 @@ calCor <- function(sel.files,
 
   if (no.clumping) {
     temp <- as.matrix(data.exp)
+    temp <- temp[rowSums(is.na(temp)) == 0,  , drop = F]
     covv <- t(temp) %*% temp / nrow(temp)
-    varr <- colMeans(temp^2)
+    varr <- colMeans(temp^2, na.rm = T)
     corr <- t(covv / sqrt(varr))/sqrt(varr)
   } else {
     if (!clump.directly) {
