@@ -106,9 +106,9 @@ getInput <- function(sel.files,
 
     if (is.null(beta_exp)) {
       beta_exp <- data.frame(temp$beta)
-      rownames(beta_exp) <- temp$SNP
+      rownames(beta_exp) <- make.names(temp$SNP, unique = T)
       se_exp <- data.frame(temp$se)
-      rownames(se_exp) <- temp$SNP
+      rownames(se_exp) <- make.names(temp$SNP, unique = T)
     } else {
       beta_exp <- beta_exp[as.character(temp$SNP), , drop = F]
       se_exp <- se_exp[as.character(temp$SNP), , drop = F]
@@ -150,7 +150,7 @@ getInput <- function(sel.files,
   sel.SNPs <- rownames(beta_exp)
 
   data_out <- temp
-  rownames(data_out) <- data_out$SNP
+  rownames(data_out) <- make.names(data_out$SNP, unique = T)
   pvals <- pvals[sel.SNPs]
 
   if (!clump.directly) {
@@ -266,7 +266,7 @@ calCor <- function(sel.files,
     temp$z <- temp$beta/temp$se
     if (is.null(data.exp)) {
       data.exp <- data.frame(temp$z)
-      rownames(data.exp) <- temp$SNP
+      rownames(data.exp) <- make.names(temp$SNP, unique = T)
     } else {
       data.exp <- data.exp[as.character(temp$SNP), , drop = F]
       data.exp <- cbind(data.exp, temp$z)
