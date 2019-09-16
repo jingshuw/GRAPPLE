@@ -284,7 +284,7 @@ grappleRobustEst <- function(b_exp, b_out,
 
 #' Huber loss function and its derivatives
 #'
-##' @import stats
+#' @import stats
 #' @keywords internal
 #'
 rho.huber <- function(r, k = 1.345, deriv = 0) {
@@ -307,7 +307,7 @@ rho.huber <- function(r, k = 1.345, deriv = 0) {
 
 #' Tukey's beweight loss function and its derivatives
 #'
-##' @import stats
+#' @import stats
 #' @keywords internal
 #'
 rho.tukey <- function(r, k = 4.685, deriv = 0) {
@@ -323,7 +323,7 @@ rho.tukey <- function(r, k = 4.685, deriv = 0) {
 
 #' L2 loss function and its derivatives
 #'
-##' @import stats
+#' @import stats
 #' @keywords internal
 #'
 rho.l2 <- function(r, deriv = 0) {

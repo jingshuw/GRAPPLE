@@ -4,12 +4,12 @@
 \alias{findModes}
 \title{Use the multiple modes of the robust profile likelihood function to find out multiple pathways in MR and their marker SNPs.}
 \usage{
-findModes(b_exp, b_out, se_exp, se_out, b_exp_st = b_exp, b_out_st = b_out,
-  se_exp_st = se_exp, se_out_st = se_out, mode.lmts = c(-2, 2),
-  cor.mat = NULL, loss.function = c("tukey", "l2", "huber"),
-  k = switch(loss.function[1], l2 = NA, huber = 1.345, tukey = 3),
-  beta.mode = NULL, include.thres = 1.4, exclude.thres = qnorm(0.975),
-  map.marker = T)
+findModes(b_exp, b_out, se_exp, se_out, b_exp_st = b_exp,
+  b_out_st = b_out, se_exp_st = se_exp, se_out_st = se_out,
+  mode.lmts = c(-2, 2), cor.mat = NULL, loss.function = c("tukey",
+  "l2", "huber"), k = switch(loss.function[1], l2 = NA, huber = 1.345,
+  tukey = 3), beta.mode = NULL, include.thres = 1.4,
+  exclude.thres = qnorm(0.975), map.marker = T)
 }
 \arguments{
 \item{b_exp}{A vector of length \code{p} for the effect sizes of \code{p} number of independent SNPs on the risk factor}

@@ -17,5 +17,6 @@ Imports:
     GenomicRanges,
     TxDb.Hsapiens.UCSC.hg38.knownGene,
     GenomicFeatures,
-    nortest
-RoxygenNote: 6.0.1
+    nortest,
+	data.table
+RoxygenNote: 6.1.1

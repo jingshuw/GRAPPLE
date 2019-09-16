@@ -4,11 +4,11 @@
 \alias{grappleRobustEst}
 \title{Robust multivariate MR estimation}
 \usage{
-grappleRobustEst(b_exp, b_out, se_exp, se_out, tau2 = NULL, cor.mat = NULL,
-  loss.function = c("l2", "huber", "tukey"), k = switch(loss.function[1], l2
-  = NA, huber = 1.345, tukey = 4.685), suppress.warning = FALSE,
-  diagnosis = FALSE, niter = 20, tol = .Machine$double.eps^0.5,
-  opt.method = "L-BFGS-B")
+grappleRobustEst(b_exp, b_out, se_exp, se_out, tau2 = NULL,
+  cor.mat = NULL, loss.function = c("l2", "huber", "tukey"),
+  k = switch(loss.function[1], l2 = NA, huber = 1.345, tukey = 4.685),
+  suppress.warning = FALSE, diagnosis = FALSE, niter = 20,
+  tol = .Machine$double.eps^0.5, opt.method = "L-BFGS-B")
 }
 \arguments{
 \item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of independent SNPs on \code{k} risk factors}

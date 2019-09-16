@@ -12,6 +12,7 @@
 #' @param plink_refdat The reference files (.bed, .bim, .fam) for PLINK
 #' 
 #' @return A list of selected summary statistics
+#' @importFrom data.table fread
 #' @export
 getInput <- function(sel.files,
                      exp.files,
@@ -27,7 +28,7 @@ getInput <- function(sel.files,
   	if (file.type == "rda" || file.type == ".rData")
 		load(file)
 	else 
-		dat <- data.frame(data.table::fread(file))
+		dat <- data.frame(fread(file))
 	sel.snps <- dat$SNP[dat$pval < p.thres]
 
 
@@ -75,7 +76,7 @@ getInput <- function(sel.files,
   	if (file.type == "rda" || file.type == ".rData")
 		load(exp.file)
 	else 
-		dat <- data.frame(data.table::fread(exp.file))
+		dat <- data.frame(fread(exp.file))
 
     sel.SNPs <- intersect(sel.SNPs, dat$SNP)
     temp <- dat[dat$SNP %in% sel.SNPs, ]
@@ -124,7 +125,7 @@ getInput <- function(sel.files,
   if (file.type == "rda" || file.type == ".rData")
 	  load(out.file)
   else 
-	  dat <- data.frame(data.table::fread(out.file))
+	  dat <- data.frame(fread(out.file))
 
   sel.SNPs <- intersect(sel.SNPs, dat$SNP)
   temp <- dat[dat$SNP %in% sel.SNPs, ]
@@ -192,6 +193,7 @@ getInput <- function(sel.files,
 #' @param p.thres The lower threshold of the p-values for a SNP to be used in calculating the correlation matrix
 #' @param seed.vec A length \code{m} vector of seeds used if clumping method is used. In order to get a stable estimate of the correlation matrix, we take the average of \code{m} numbers of estimated correlation matrix weather each estimate use a randomly sampled clumped set of SNPs. 
 #'
+#' @importFrom data.table fread
 #' @export
 calCor <- function(sel.files,
                    exp.files,
@@ -206,7 +208,7 @@ calCor <- function(sel.files,
   	if (file.type == "rda" || file.type == ".rData")
 		load(file)
 	else 
-		dat <- data.frame(data.table::fread(file))
+		dat <- data.frame(fread(file))
 
     sel.snps <- dat$SNP[dat$pval > p.thres]
     if (is.null(sel.SNPs))
@@ -235,7 +237,7 @@ calCor <- function(sel.files,
   	if (file.type == "rda" || file.type == ".rData")
 		load(exp.file)
 	else 
-		dat <- data.frame(data.table::fread(exp.file))
+		dat <- data.frame(fread(exp.file))
 
 
     sel.SNPs <- intersect(sel.SNPs, dat$SNP)
@@ -281,7 +283,7 @@ calCor <- function(sel.files,
   if (file.type == "rda" || file.type == ".rData")
 	  load(out.file)
   else 
-	  dat <- data.frame(data.table::fread(out.file))
+	  dat <- data.frame(fread(out.file))
 
   sel.SNPs <- intersect(sel.SNPs, dat$SNP)
   temp <- dat[dat$SNP %in% sel.SNPs, ]

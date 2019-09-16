@@ -19,13 +19,13 @@
 #'
 #' @return A list of the modes, RAP plot and the markers
 #'
-##' @import ggplot2 
-##' @import biomaRt 
-##' @import rsnps 
-##' @import GenomicRanges 
-##' @import TxDb.Hsapiens.UCSC.hg38.knownGene 
-##' @import GenomicFeatures
-##' @import IRanges
+#' @import ggplot2 
+#' @import biomaRt 
+#' @import rsnps 
+#' @importFrom GenomicRanges GRanges nearest 
+#' @import TxDb.Hsapiens.UCSC.hg38.knownGene 
+#' @import GenomicFeatures
+#' @importFrom IRanges IRanges
 #' @export
 findModes <- function(b_exp, b_out, 
                       se_exp, se_out, 
@@ -168,8 +168,8 @@ findModes <- function(b_exp, b_out,
     snp_locs0 <- snp_locs0[!is.na(snp_locs0$chr), ]
     markers <- markers[paste0("rs", snp_locs0$snp_id), ]
 
-    snp_locs <- try(GenomicRanges::GRanges(seqnames = paste("chr", snp_locs0$chr, sep = ""), 
-                            ranges = IRanges::IRanges(start = as.numeric(snp_locs0$BP), width = 1)))
+    snp_locs <- try(GRanges(seqnames = paste("chr", snp_locs0$chr, sep = ""), 
+                            ranges = IRanges(start = as.numeric(snp_locs0$BP), width = 1)))
 
     if (class(snp_locs) != "try-error") {
 
@@ -178,7 +178,7 @@ findModes <- function(b_exp, b_out,
       ## find the nearest gene
       txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
       refseq.genes<- GenomicFeatures::genes(txdb)
-      rr <- data.frame(GenomicRanges::nearest(snp_locs, refseq.genes, ignore.strand = T, select = "all"), 
+      rr <- data.frame(nearest(snp_locs, refseq.genes, ignore.strand = T, select = "all"), 
                        stringsAsFactors = F)
       genes <- refseq.genes[rr[, 2]]
       genes <- data.frame(genes, stringsAsFactors=F)$gene_id
