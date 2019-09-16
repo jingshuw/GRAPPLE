@@ -1,7 +1,7 @@
 #' SNP selection and clumping based on GWAS summary statistics
 #'
 #'
-#' @param sel.files A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors SNP selection. Each GWAS file is an ".rda" or ".rData" file containing an R object of name "dat". The "dat" object is a data frame that at least has a column "SNP" for the SNP ids, "pval" for the p-values. 
+#' @param sel.files A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors SNP selection. Each GWAS file is an ".rda", ".rData", ".csv" or ".txt" file containing an R object of name "dat". The "dat" object is a data frame that at least has a column "SNP" for the SNP ids, "pval" for the p-values. 
 #' @param exp.files A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors for getting the effect sizes and standard deviations. Each GWAS file should have a column "SNP" for the SNP ids, "beta" for the effect sizes, "se" for the standard deviation, "effect_allele" for the effect allele of the SNP (capitalized letters) and "other_allele" for the other allele of the SNP (capitalized letters). 
 #' @param out.file The GWAS summary statistics file name for the outcome data. Each GWAS file should have a column "SNP" for the SNP ids, "beta" for the effect sizes, "se" for the standard deviation, "effect_allele" for the effect allele of the SNP (capitalized letters) and "other_allele" for the other allele of the SNP (capitalized letters). 
 #' @param p.thres The upper threshold of the selection p-values for a SNP to be selected before clumping. It only requires that at least one of the p-values of the risk factors of the SNPs to be below the threshold. 
@@ -23,8 +23,12 @@ getInput <- function(sel.files,
   pvals <- NULL
   for (file in sel.files) {
     print(paste("loading data for selection:", file, "..."))
-    load(file)
-    sel.snps <- dat$SNP[dat$pval < p.thres]
+  	file.type <- strsplit(file, "[.]")[[1]][2]
+  	if (file.type == "rda" || file.type == ".rData")
+		load(file)
+	else 
+		dat <- data.frame(data.table::fread(file))
+	sel.snps <- dat$SNP[dat$pval < p.thres]
 
 
     if (is.null(sel.SNPs)) {
@@ -67,7 +71,12 @@ getInput <- function(sel.files,
   for (exp.file in exp.files) {
     print(paste("loading data from exposure:", exp.file, "..."))
 
-    load(exp.file)
+ 	file.type <- strsplit(exp.file, "[.]")[[1]][2]
+  	if (file.type == "rda" || file.type == ".rData")
+		load(exp.file)
+	else 
+		dat <- data.frame(data.table::fread(exp.file))
+
     sel.SNPs <- intersect(sel.SNPs, dat$SNP)
     temp <- dat[dat$SNP %in% sel.SNPs, ]
     rm(dat)
@@ -111,7 +120,12 @@ getInput <- function(sel.files,
 
   ## load outcome file
   print(paste("loading data for outcome:", out.file, "..."))
-  load(out.file)
+  file.type <- strsplit(out.file, "[.]")[[1]][2]
+  if (file.type == "rda" || file.type == ".rData")
+	  load(out.file)
+  else 
+	  dat <- data.frame(data.table::fread(out.file))
+
   sel.SNPs <- intersect(sel.SNPs, dat$SNP)
   temp <- dat[dat$SNP %in% sel.SNPs, ]
   rm(dat)
@@ -188,7 +202,12 @@ calCor <- function(sel.files,
   sel.SNPs <- NULL
   for (file in sel.files) {
     print(paste("loading data from selection:", file, "..."))
-    load(file)
+  	file.type <- strsplit(file, "[.]")[[1]][2]
+  	if (file.type == "rda" || file.type == ".rData")
+		load(file)
+	else 
+		dat <- data.frame(data.table::fread(file))
+
     sel.snps <- dat$SNP[dat$pval > p.thres]
     if (is.null(sel.SNPs))
       sel.SNPs <- sel.snps
@@ -212,7 +231,13 @@ calCor <- function(sel.files,
   for (exp.file in exp.files) {
     print(paste("loading data from exposure:", exp.file, "..."))
 
-      load(exp.file)
+    file.type <- strsplit(exp.file, "[.]")[[1]][2]
+  	if (file.type == "rda" || file.type == ".rData")
+		load(exp.file)
+	else 
+		dat <- data.frame(data.table::fread(exp.file))
+
+
     sel.SNPs <- intersect(sel.SNPs, dat$SNP)
     temp <- dat[dat$SNP %in% sel.SNPs, ]
     rm(dat)
@@ -252,7 +277,12 @@ calCor <- function(sel.files,
 
   ## load outcome file
   print(paste("loading data for outcome:", out.file, "..."))
-  load(out.file)
+  file.type <- strsplit(out.file, "[.]")[[1]][2]
+  if (file.type == "rda" || file.type == ".rData")
+	  load(out.file)
+  else 
+	  dat <- data.frame(data.table::fread(out.file))
+
   sel.SNPs <- intersect(sel.SNPs, dat$SNP)
   temp <- dat[dat$SNP %in% sel.SNPs, ]
   rm(dat)
