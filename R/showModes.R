@@ -156,14 +156,13 @@ findModes <- function(b_exp, b_out,
 
 
     snp_ids <- rownames(markers)
-	print(snp_ids)
 
  #   require(rsnps)
  #   require(GenomicRanges)
     ## find the location of SNPs
   #  snp_locs0 <- as.data.frame(t(sapply(snp_ids, function(id)rsnps::ncbi_snp_query(id))))
     snp_locs0 <- try(ncbi_snp_summary(snp_ids))
-	if (class(snp_locs0[1]) == "try-error")
+	if (class(snp_locs0) == "try-error")
 		snp_locs0 <- ncbi_snp_summary(snp_ids)
 	temp <- strsplit(snp_locs0$chrpos, split = ":")
     snp_locs0$chr <- as.numeric(sapply(temp, function(v)v[1]))
@@ -177,12 +176,10 @@ findModes <- function(b_exp, b_out,
 
 
     snp_locs0 <- snp_locs0[!is.na(snp_locs0$chr), ]
-	print(snp_locs0)
     markers <- markers[paste0("rs", snp_locs0$snp_id), ]
 
     snp_locs <- try(GRanges(seqnames = paste("chr", snp_locs0$chr, sep = ""), 
                             ranges = IRanges(start = as.numeric(snp_locs0$BP), width = 1)))
-	print(snp_locs)
 
     if (class(snp_locs) != "try-error") {
 
@@ -193,10 +190,8 @@ findModes <- function(b_exp, b_out,
       refseq.genes<- GenomicFeatures::genes(txdb)
       rr <- data.frame(nearest(snp_locs, refseq.genes, ignore.strand = T, select = "all"), 
                        stringsAsFactors = F)
-	  print(rr)
       genes <- refseq.genes[rr[, 2]]
       genes <- data.frame(genes, stringsAsFactors=F)$gene_id
-        print(genes)
 
       ## map the gene IDs
       ans <- try(unique(biomaRt::getBM(attributes = c("hgnc_symbol", "entrezgene_id"),    
