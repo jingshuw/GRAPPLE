@@ -21,7 +21,6 @@
 #'
 #' @import ggplot2 
 #' @import biomaRt 
-#' @import rsnps 
 #' @importFrom GenomicRanges GRanges nearest 
 #' @import TxDb.Hsapiens.UCSC.hg38.knownGene 
 #' @import GenomicFeatures
@@ -108,9 +107,11 @@ findModes <- function(b_exp, b_out,
 
   rownames(res.mat) <- rownames(b_exp_st)
 
-  ss <- which(rowSums(abs(res.mat) < exclude.thres) == 1 & rowSums(abs(res.mat) < include.thres) > 0)
+  ss <- which(rowSums(abs(res.mat) < exclude.thres) == 1 & 
+			  rowSums(abs(res.mat) < include.thres) > 0)
 
-  markers <- as.data.frame(abs(res.mat[ss, , drop = F]) < include.thres)
+  res.mat <- res.mat[ss, , drop = F]
+  markers <- as.data.frame(abs(res.mat) < include.thres)
 
   keep.mode <- colSums(markers) > 0
 
@@ -125,8 +126,9 @@ findModes <- function(b_exp, b_out,
   geom_vline(xintercept = beta.mode[!keep.mode], color = "gray", linetype = "dashed") + 
   labs(y = "RAP lieklihood") +
   annotate("text", x = mode.lmts[1] * 0.75 + mode.lmts[2] * 0.25,
-           y = sum(range(temp.data$likelihood) * c(0.25, 0.75)), label = paste(length(b_out), "SNPs")) + 
-      theme(axis.line = element_line(linetype = "solid"),          
+           y = sum(range(temp.data$likelihood) * c(0.25, 0.75)), 
+		   label = paste(length(b_out), "SNPs")) + 
+  theme(axis.line = element_line(linetype = "solid"),          
       #   axis.text.x=element_blank(),
       axis.text.y=element_blank(),
       axis.ticks.y=element_blank(),
@@ -147,29 +149,40 @@ findModes <- function(b_exp, b_out,
  #   require(biomaRt)
 
     #    snp_mart = useMart("ENSEMBL_MART_SNP", dataset="hsapiens_snp")
-    print("loading ensembl data ...")
+#    print("loading ensembl data ...")
  #   data(sysdata)
     #  ensembl <- useMart("ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
-    print("ensembl data loaded!")
+ #   print("ensembl data loaded!")
 
 
     snp_ids <- rownames(markers)
+	print(snp_ids)
 
  #   require(rsnps)
  #   require(GenomicRanges)
     ## find the location of SNPs
   #  snp_locs0 <- as.data.frame(t(sapply(snp_ids, function(id)rsnps::ncbi_snp_query(id))))
-    snp_locs0 <- rsnps::ncbi_snp_summary(snp_ids)[, c("snp_id", "chrpos", "gene2")]
-    temp <- strsplit(snp_locs0$chrpos, split = ":")
+    snp_locs0 <- try(ncbi_snp_summary(snp_ids))
+	if (class(snp_locs0[1]) == "try-error")
+		snp_locs0 <- ncbi_snp_summary(snp_ids)
+	temp <- strsplit(snp_locs0$chrpos, split = ":")
     snp_locs0$chr <- as.numeric(sapply(temp, function(v)v[1]))
     snp_locs0$BP <- as.numeric(sapply(temp, function(v)v[2]))
-    snp_locs0$Gene <- snp_locs0$gene2
+	genes <- strsplit(snp_locs0$gene2, split = ",")
+	genes <- sapply(genes, function(gene.vec)
+					paste(sapply(strsplit(gene.vec, split = ":"), function(tt)tt[[1]]),
+						  collapse = "/"))
+    snp_locs0$Gene <- genes
+
+
 
     snp_locs0 <- snp_locs0[!is.na(snp_locs0$chr), ]
+	print(snp_locs0)
     markers <- markers[paste0("rs", snp_locs0$snp_id), ]
 
     snp_locs <- try(GRanges(seqnames = paste("chr", snp_locs0$chr, sep = ""), 
                             ranges = IRanges(start = as.numeric(snp_locs0$BP), width = 1)))
+	print(snp_locs)
 
     if (class(snp_locs) != "try-error") {
 
@@ -180,25 +193,25 @@ findModes <- function(b_exp, b_out,
       refseq.genes<- GenomicFeatures::genes(txdb)
       rr <- data.frame(nearest(snp_locs, refseq.genes, ignore.strand = T, select = "all"), 
                        stringsAsFactors = F)
+	  print(rr)
       genes <- refseq.genes[rr[, 2]]
       genes <- data.frame(genes, stringsAsFactors=F)$gene_id
-      #  print(genes)
+        print(genes)
 
       ## map the gene IDs
-      ans <- try(unique(biomaRt::getBM(attributes = c("hgnc_symbol", "entrezgene"),    
-                          filters = "entrezgene",
+      ans <- try(unique(biomaRt::getBM(attributes = c("hgnc_symbol", "entrezgene_id"),    
+                          filters = "entrezgene_id",
                           values = genes,
                           mart = ensembl)))
       if (class(ans) == "try-error") {
         hgnc.names <- rep("NA", nrow(markers))
         entrez.names <- hgnc.names
       } else {
-      temp <- table(ans$entrezgene)
+      temp <- table(ans$entrezgene_id)
       gg <- rownames(temp[temp == 1])
-      ans <- ans[ans$entrezgene %in% gg, ]
-      #print(ans)
-      rownames(ans) <- ans$entrezgene
-      ans <- ans[genes, ]
+      ans <- ans[ans$entrezgene_id %in% gg, ]
+	  rownames(ans) <- ans$entrezgene_id
+	  ans <- ans[genes, ]
       rr <- data.frame(rr, ans$hgnc_symbol, genes, stringsAsFactors = F)
       hgnc.names <- sapply(unique(rr[, 1]), 
                            function(k) {
@@ -217,15 +230,27 @@ findModes <- function(b_exp, b_out,
     markers$Chromosome <- as.numeric(snp_locs0$chr)
     markers$BP <- as.numeric(snp_locs0$BP)
     markers$inside_gene <- snp_locs0$Gene 
-    #   markers <- cbind(markers, as.data.frame(snp_locs0[, -1]))
-    markers.full <- markers
-    markers.full$entrez_gene <- entrez.names
+	markers <- cbind(markers[, c("Chromosome", "BP", "inside_gene", "nearest_gene")], 
+					 markers[, 1:sum(keep.mode)], res.mat)
+	colnames(markers) <- c("Chr", "BP", "Inside_gene", "Nearest_gene", "Mode1_marker",
+						   "Mode2_markers", "Mode1_stats", "Mode2_stats")
+	#   markers <- cbind(markers, as.data.frame(snp_locs0[, -1]))
+  #  markers.full <- markers
+  #  markers.full$entrez_gene <- entrez.names
   } else
     markers.full <- markers
 
   #   print(markers)
 
-  try(markers <- markers[do.call("order", -markers[, 1:sum(keep.mode), drop = F]),, drop = F])
+  res.mat.ranking <- data.frame(res.mat)
+  res.mat.ranking[abs(res.mat) > include.thres] <- Inf
+  res.mat.ranking <- abs(res.mat.ranking)
+
+  try(markers <- markers[do.call("order", 
+								 res.mat.ranking[, 1:sum(keep.mode), drop = F]),, drop = F])
+
+  try(res.mat <- res.mat[do.call("order", 
+								 res.mat.ranking[, 1:sum(keep.mode), drop = F]),, drop = F])
 
 
 
@@ -233,9 +258,9 @@ findModes <- function(b_exp, b_out,
               modes = beta.mode[keep.mode],
               raw.modes = beta.mode, 
               p = p,
-              markers = markers,
+              markers = markers))
             #  markers.full = markers.full,
-              res.mat = res.mat))
+            #  res.mat = res.mat))
 
 }
 
