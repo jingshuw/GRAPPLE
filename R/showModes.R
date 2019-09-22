@@ -232,8 +232,10 @@ findModes <- function(b_exp, b_out,
 	#   markers <- cbind(markers, as.data.frame(snp_locs0[, -1]))
   #  markers.full <- markers
   #  markers.full$entrez_gene <- entrez.names
-  } else
-    markers.full <- markers
+  } else {
+    markers	<- cbind(markers, res.mat)
+  	colnames(markers) <- c("Mode1_marker", "Mode1_stats")
+  }
 
   #   print(markers)
 
