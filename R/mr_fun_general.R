@@ -103,6 +103,8 @@ grappleRobustEst <- function(b_exp, b_out,
 
  #   beta.hat <- beta.hat + rnorm(length(beta.hat), bound.beta * 0.05)
 
+#	Sys.sleep(10)
+	print("Initialization done!!")
     for (iter in 1:niter) {
       beta.hat.old <- beta.hat
       tau2.hat.old <- tau2.hat
