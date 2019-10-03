@@ -62,7 +62,6 @@ getInput <- function(sel.files,
     pvals <- data.sel$pval
     names(pvals) <- sel.SNPs
     rm(data.sel)
-    gc()
   }
 
 
@@ -93,7 +92,6 @@ getInput <- function(sel.files,
       ref.data.exp <- temp.result[, c(1, grep(".exposure", colnames(temp.result)))]
   #    colnames(data.sel) <- gsub(".exposure", "", colnames(data.sel))
       rm(temp.result)
-      gc()
       beta_exp <- beta_exp[as.character(ref.data.exp$SNP), , drop = F]
       se_exp <- se_exp[as.character(ref.data.exp$SNP), , drop = F]
       flip <- rep(1, nrow(beta_exp))
@@ -140,7 +138,6 @@ getInput <- function(sel.files,
   ref.data.exp <- temp.result[, c(1, grep(".exposure", colnames(temp.result)))]
   #    colnames(data.sel) <- gsub(".exposure", "", colnames(data.sel))
   rm(temp.result)
-  gc()
   beta_exp <- beta_exp[as.character(ref.data.exp$SNP), , drop = F]
   se_exp <- se_exp[as.character(ref.data.exp$SNP), , drop = F]
 
@@ -175,7 +172,6 @@ getInput <- function(sel.files,
     pvals <- pvals[sel.SNPs]
     names(pvals) <- sel.SNPs
     rm(data.sel)
-    gc()
   }
 
   return(list(beta_exp = beta_exp, se_exp = se_exp,
@@ -224,7 +220,6 @@ calCor <- function(sel.files,
     data.sel <- plink_clump(data.sel, plink_exe, refdat)
     sel.SNPs <- data.sel$SNP
     rm(data.sel)
-    gc()
   }
 
 
@@ -254,7 +249,6 @@ calCor <- function(sel.files,
       ref.data.exp <- temp.result[, c(1, grep(".exposure", colnames(temp.result)))]
   #    colnames(data.sel) <- gsub(".exposure", "", colnames(data.sel))
       rm(temp.result)
-      gc()
       data.exp <- data.exp[as.character(ref.data.exp$SNP), , drop = F]
       flip <- rep(1, nrow(data.exp))
       flip[sign(data.exp[, 1]) != sign(ref.data.exp$beta.exposure/ref.data.exp$se.exposure)] <- -1
@@ -297,7 +291,6 @@ calCor <- function(sel.files,
   ref.data.exp <- temp.result[, c(1, grep(".exposure", colnames(temp.result)))]
   #    colnames(data.sel) <- gsub(".exposure", "", colnames(data.sel))
   rm(temp.result)
-  gc()
   data.exp <- data.exp[as.character(ref.data.exp$SNP), , drop = F]
   flip <- rep(1, nrow(data.exp))
   flip[sign(data.exp[, 1]) != sign(ref.data.exp$beta.exposure/ref.data.exp$se.exposure)] <- -1
@@ -310,7 +303,6 @@ calCor <- function(sel.files,
   data.exp <- cbind(data.exp, temp$z)
   colnames(data.exp) <- c(colnames(data.exp)[1:(ncol(data.exp) - 1)], "Outcome")
   rm(temp)
-  gc()
 
   if (no.clumping) {
     temp <- as.matrix(data.exp)
@@ -329,7 +321,6 @@ calCor <- function(sel.files,
                           rm(data.sel)
                           corr <- cor(data.exp1)
                           rm(data.exp1)
-                          gc()
                           return(corr)
                    })
       corr <- Reduce("+", corr.list)/length(corr.list)
