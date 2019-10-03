@@ -9,7 +9,7 @@ plink_refdat <- "~/Dropbox/two_sample/profile_likelihood_data/ld_files/data_maf0
 
 corr <- calCor(sel.files, 
               exp.files,
-              out.file, plink_exe, plink_refdat)
+              out.file, p.thres = 0.5)
 
 dat.list <- getInput(sel.files, exp.files, out.file, plink_exe, plink_refdat, p.thres = 1e-5)
 strong.dat.list <- getInput(exp.files, exp.files, out.file, plink_exe, plink_refdat, 
