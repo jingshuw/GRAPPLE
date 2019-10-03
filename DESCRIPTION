@@ -7,7 +7,6 @@ Depends: R (>= 3.4.0)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-biocViews:
 Imports:
     stats,
     ggplot2,
