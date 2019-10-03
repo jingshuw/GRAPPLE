@@ -9,16 +9,9 @@ Encoding: UTF-8
 LazyData: true
 biocViews:
 Imports:
-    IRanges,
     stats,
     ggplot2,
-    biomaRt,
-    xml2,
-	httr,
-	crul,
-	GenomicRanges,
-    TxDb.Hsapiens.UCSC.hg38.knownGene,
-    GenomicFeatures,
     nortest,
-	data.table
+	data.table,
+	haploR
 RoxygenNote: 6.1.1

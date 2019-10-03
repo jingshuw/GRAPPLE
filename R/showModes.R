@@ -20,11 +20,7 @@
 #' @return A list of the modes, RAP plot and the markers
 #'
 #' @import ggplot2 
-#' @import biomaRt 
-#' @importFrom GenomicRanges GRanges nearest 
-#' @import TxDb.Hsapiens.UCSC.hg38.knownGene 
-#' @import GenomicFeatures
-#' @importFrom IRanges IRanges
+#' @importFrom haploR queryHaploreg
 #' @export
 findModes <- function(b_exp, b_out, 
                       se_exp, se_out, 
@@ -54,18 +50,12 @@ findModes <- function(b_exp, b_out,
                 huber = function(r, ...) rho.huber(r, k, ...),
                 tukey = function(r, ...) rho.tukey(r, k, ...))
 
-  #    delta <- integrate(function(x) x * rho(x, deriv = 1) * dnorm(x), -Inf, Inf)$value
   delta <- integrate(function(x)  rho(x) * dnorm(x), -Inf, Inf)$value
 
   c1 <- integrate(function(x) rho(x, deriv = 1)^2 * dnorm(x), -Inf, Inf)$value
-  #   c2 <- integrate(function(x) x^2 * rho(x, deriv = 1)^2 * dnorm(x), -Inf, Inf)$value - delta^2
   c2 <- integrate(function(x) rho(x)^2 * dnorm(x), -Inf, Inf)$value - delta^2
   c4 <- integrate(function(x) rho(x, deriv = 1) * x * dnorm(x), -Inf, Inf)$value
-  #   c3 <- integrate(function(x) (rho(x, deriv = 2) * x^2 + rho(x, deriv = 1) * x)* dnorm(x), -Inf, Inf)$value
   c3 <- c4
-
-  #  delta <- integrate(function(x) rho(x) * dnorm(x), -Inf, Inf)$value
-  #  delta <- integrate(function(x) rho(x) * dnorm(x), -Inf, Inf)$value
 
 
   ## First, calculate t for each SNP
@@ -129,11 +119,8 @@ findModes <- function(b_exp, b_out,
            y = sum(range(temp.data$likelihood) * c(0.25, 0.75)), 
 		   label = paste(length(b_out), "SNPs")) + 
   theme(axis.line = element_line(linetype = "solid"),          
-      #   axis.text.x=element_blank(),
       axis.text.y=element_blank(),
       axis.ticks.y=element_blank(),
-      #    axis.title.x= element_blank(),
-      #   axis.title.y="sss",
       legend.position="none",
       panel.background=element_blank(),
       panel.border=element_blank(),
@@ -146,95 +133,42 @@ findModes <- function(b_exp, b_out,
     map.marker <- F
   if (map.marker) {
 
- #   require(biomaRt)
-
-    #    snp_mart = useMart("ENSEMBL_MART_SNP", dataset="hsapiens_snp")
-#    print("loading ensembl data ...")
- #   data(sysdata)
-    #  ensembl <- useMart("ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
- #   print("ensembl data loaded!")
-
 
     snp_ids <- rownames(markers)
+  	print(dim(markers))
 
- #   require(rsnps)
- #   require(GenomicRanges)
-    ## find the location of SNPs
-  #  snp_locs0 <- as.data.frame(t(sapply(snp_ids, function(id)rsnps::ncbi_snp_query(id))))
-    snp_locs0 <- try(ncbi_snp_summary(snp_ids))
-	if (class(snp_locs0) == "try-error")
-		snp_locs0 <- ncbi_snp_summary(snp_ids)
-	temp <- strsplit(snp_locs0$chrpos, split = ":")
-    snp_locs0$chr <- as.numeric(sapply(temp, function(v)v[1]))
-    snp_locs0$BP <- as.numeric(sapply(temp, function(v)v[2]))
-	genes <- strsplit(snp_locs0$gene2, split = ",")
-	genes <- sapply(genes, function(gene.vec)
-					paste(sapply(strsplit(gene.vec, split = ":"), function(tt)tt[[1]]),
-						  collapse = "/"))
-    snp_locs0$Gene <- genes
+  	## map to HaploReg
+	
+    results <- queryHaploreg(query = snp_ids, ldThres = 0.9)
+	results <- as.data.frame(results[, c("rsID", "chr", "pos_hg38", "GENCODE_name", "gwas", "dbSNP_functional_annotation",
+										 "is_query_snp", "r2")],
+							 stringsAsFactors = F)
+	tt <- strsplit(results$gwas, split = ";")
+	tt <- lapply(tt, function(traits) {
+					 trait <- strsplit(traits, split = ",")
+					 if (trait[[1]][1] == ".")
+						 return(traits)
+					 trait_name <- sapply(trait, function(item) item[2])
+					 pvalues <- sapply(trait, function(item) as.numeric(item[3]))
+					 return(paste0(unique(trait_name[sort(pvalues, index.return = T)$ix]), collapse = ","))				 
+							 })
+	results$gwas_short <- tt
+	results.supp <- results[results$is_query_snp == 0 & results$gwas != ".", ]
+	results <- results[results$is_query_snp == 1, ]
+	ss <- subset(results, select = c(gwas, dbSNP_functional_annotation))
+	results <- subset(results, select = -c(gwas, dbSNP_functional_annotation, is_query_snp, r2))
+	results.supp <- subset(results.supp, select = -is_query_snp)
+	results.supp <- results.supp[order(results.supp$GENCODE_name), ]
 
+	markers <- cbind(markers, res.mat)
+	colnames(markers) <- c(paste0("Mode", 1:sum(keep.mode), "_marker"), paste0("Mode", 1:sum(keep.mode), "_stats"))
+    markers <- cbind(results, data.frame(markers)[results$rsID, ], ss)
+	res.mat <- data.frame(res.mat)[markers$rsID, ]
 
-
-    snp_locs0 <- snp_locs0[!is.na(snp_locs0$chr), ]
-    markers <- markers[paste0("rs", snp_locs0$snp_id), ]
-
-    snp_locs <- try(GRanges(seqnames = paste("chr", snp_locs0$chr, sep = ""), 
-                            ranges = IRanges(start = as.numeric(snp_locs0$BP), width = 1)))
-
-    if (class(snp_locs) != "try-error") {
-
-  #    require(GenomicFeatures)
-  #    library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-      ## find the nearest gene
-      txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
-      refseq.genes<- GenomicFeatures::genes(txdb)
-      rr <- data.frame(nearest(snp_locs, refseq.genes, ignore.strand = T, select = "all"), 
-                       stringsAsFactors = F)
-      genes <- refseq.genes[rr[, 2]]
-      genes <- data.frame(genes, stringsAsFactors=F)$gene_id
-
-      ## map the gene IDs
-      ans <- try(unique(biomaRt::getBM(attributes = c("hgnc_symbol", "entrezgene_id"),    
-                          filters = "entrezgene_id",
-                          values = genes,
-                          mart = ensembl)))
-      if (class(ans) == "try-error") {
-        hgnc.names <- rep("NA", nrow(markers))
-        entrez.names <- hgnc.names
-      } else {
-      temp <- table(ans$entrezgene_id)
-      gg <- rownames(temp[temp == 1])
-      ans <- ans[ans$entrezgene_id %in% gg, ]
-	  rownames(ans) <- ans$entrezgene_id
-	  ans <- ans[genes, ]
-      rr <- data.frame(rr, ans$hgnc_symbol, genes, stringsAsFactors = F)
-      hgnc.names <- sapply(unique(rr[, 1]), 
-                           function(k) {
-                             temp <- rr[rr[, 1] == k, 3]
-                             paste(temp[!is.na(temp)], collapse = "/")})
-      entrez.names <-  sapply(unique(rr[, 1]), 
-                              function(k) {
-                                temp <- rr[rr[, 1] == k, 4]
-                                paste(temp[!is.na(temp)], collapse = "/")})
-    }} else {
-      hgnc.names <- rep("NA", nrow(markers))
-      entrez.names <- hgnc.names
-    }
-
-    markers$nearest_gene <- hgnc.names
-    markers$Chromosome <- as.numeric(snp_locs0$chr)
-    markers$BP <- as.numeric(snp_locs0$BP)
-    markers$inside_gene <- snp_locs0$Gene 
-	markers <- cbind(markers[, c("Chromosome", "BP", "inside_gene", "nearest_gene")], 
-					 markers[, 1:sum(keep.mode)], res.mat)
-	colnames(markers) <- c("Chr", "BP", "Inside_gene", "Nearest_gene", "Mode1_marker",
-						   "Mode2_markers", "Mode1_stats", "Mode2_stats")
-	#   markers <- cbind(markers, as.data.frame(snp_locs0[, -1]))
-  #  markers.full <- markers
-  #  markers.full$entrez_gene <- entrez.names
   } else {
-    markers	<- cbind(markers, res.mat)
-  	colnames(markers) <- c("Mode1_marker", "Mode1_stats")
+	  markers	<- cbind(markers, res.mat)
+	  colnames(markers) <- c("Mode1_marker", "Mode1_stats")
+	  results.supp <- NULL
   }
 
   #   print(markers)
@@ -255,7 +189,8 @@ findModes <- function(b_exp, b_out,
               modes = beta.mode[keep.mode],
               raw.modes = beta.mode, 
               p = p,
-              markers = markers))
+              markers = markers,
+			  supp_gwas = results.supp))
             #  markers.full = markers.full,
             #  res.mat = res.mat))
 
