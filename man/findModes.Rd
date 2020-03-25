@@ -9,7 +9,8 @@ findModes(b_exp, b_out, se_exp, se_out, b_exp_st = b_exp,
   mode.lmts = c(-2, 2), cor.mat = NULL, loss.function = c("tukey",
   "l2", "huber"), k = switch(loss.function[1], l2 = NA, huber = 1.345,
   tukey = 3), beta.mode = NULL, include.thres = 1.4,
-  exclude.thres = qnorm(0.975), map.marker = T)
+  exclude.thres = qnorm(0.975), map.marker = T, ldThres = 0.9,
+  p.thres = NULL, npoints = 5000)
 }
 \arguments{
 \item{b_exp}{A vector of length \code{p} for the effect sizes of \code{p} number of independent SNPs on the risk factor}
@@ -41,6 +42,8 @@ findModes(b_exp, b_out, se_exp, se_out, b_exp_st = b_exp,
 \item{exclude.thres}{Absolute value lower threshold of the standardized test statistics of one SNP on other modes for the SNP to be included as a marker for that mode, default is \code{qnorm(0.975)}}
 
 \item{map.marker}{Whether map each marker to the earist gene or not. Default is TRUE if multiple markers are found. It is always FALSE if there is just one mode.}
+
+\item{ldThres}{the parameter passed to the \code{queryhaploReg} function. Increase to 1 when there is a "timeout" error.}
 
 \item{mode_lmts}{The range of \code{beta} that the modes are searched from. Default is \code{c(-2, 2)}}
 }

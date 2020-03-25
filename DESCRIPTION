@@ -12,5 +12,6 @@ Imports:
     ggplot2,
     nortest,
 	data.table,
-	haploR
+	haploR,
+	ggrepel
 RoxygenNote: 6.1.1
