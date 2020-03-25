@@ -49,7 +49,7 @@ getInput <- function(sel.files,
     #  pvals <- temp
       names(pvals) <- sel.SNPs
       rm(temp)
-    }
+	}
     rm(dat)
   }
   pvals <- pvals * length(sel.files)
@@ -63,6 +63,7 @@ getInput <- function(sel.files,
     names(pvals) <- sel.SNPs
     rm(data.sel)
   }
+
 
 
   beta_exp <- NULL
@@ -80,6 +81,8 @@ getInput <- function(sel.files,
     sel.SNPs <- intersect(sel.SNPs, dat$SNP)
     temp <- dat[dat$SNP %in% sel.SNPs, ]
     rm(dat)
+
+	
 
 
     ## harmonize
@@ -129,6 +132,7 @@ getInput <- function(sel.files,
   temp <- dat[dat$SNP %in% sel.SNPs, ]
   rm(dat)
 
+
   ## harmonize
   temp <- formatData(temp, "outcome")
   temp.result <- suppressMessages(harmonise_data(ref.data.exp, temp))
@@ -139,17 +143,25 @@ getInput <- function(sel.files,
   #    colnames(data.sel) <- gsub(".exposure", "", colnames(data.sel))
   rm(temp.result)
   beta_exp <- beta_exp[as.character(ref.data.exp$SNP), , drop = F]
+
+
   se_exp <- se_exp[as.character(ref.data.exp$SNP), , drop = F]
 
   flip <- rep(1, nrow(beta_exp))
   flip[sign(beta_exp[, 1]) != sign(ref.data.exp$beta.exposure)] <- -1
 #  print(sum(flip == -1))
+
   beta_exp <- flip * beta_exp
   sel.SNPs <- rownames(beta_exp)
+
+
 
   data_out <- temp
   rownames(data_out) <- make.names(data_out$SNP, unique = T)
   pvals <- pvals[sel.SNPs]
+
+
+
 
   if (!clump.directly) {
   #  print(quantile(pvals))
@@ -160,10 +172,12 @@ getInput <- function(sel.files,
     } else {
       keep.snps <- c()
     }
+
     data.sel <- data.frame(SNP = sel.SNPs, pval = pvals)
 
    
     data.sel <- plink_clump(data.sel, plink_exe, plink_refdat, clump_r2 = clump_r2)
+
     sel.SNPs <- union(as.character(keep.snps), as.character(data.sel$SNP))
     beta_exp <- beta_exp[as.character(sel.SNPs), , drop = F]
     se_exp <- se_exp[as.character(sel.SNPs), , drop = F]

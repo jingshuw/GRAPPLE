@@ -104,6 +104,7 @@ grappleRobustEst <- function(b_exp, b_out,
  #   beta.hat <- beta.hat + rnorm(length(beta.hat), bound.beta * 0.05)
 
     for (iter in 1:niter) {
+#		print(iter)
       beta.hat.old <- beta.hat
       tau2.hat.old <- tau2.hat
       if (is.null(tau2)) {
@@ -122,7 +123,7 @@ grappleRobustEst <- function(b_exp, b_out,
    #         tau2.hat <- 0
         
    #     }
-   #     print(tau2.hat)
+    #    print(tau2.hat)
         if (opt.method == "L-BFGS-B") {
           beta.hat <- optim(beta.hat, function(beta) robust.optfun.fixtau(beta, tau2.hat),
                             method = opt.method, lower = -bound.beta, upper = bound.beta, 
