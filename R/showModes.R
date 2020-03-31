@@ -17,6 +17,7 @@
 #' @param exclude.thres Absolute value lower threshold of the standardized test statistics of one SNP on other modes for the SNP to be included as a marker for that mode, default is \code{qnorm(0.975)}
 #' @param map.marker Whether map each marker to the earist gene or not. Default is TRUE if multiple markers are found. It is always FALSE if there is just one mode.
 #' @param ldThres the parameter passed to the \code{queryhaploReg} function. Increase to 1 when there is a "timeout" error.
+#' @param npoints: number of equally spaced points chosen for grid search of modes within the range \code{mode.lmts}.
 #'
 #' @return A list of the modes, RAP plot and the markers
 #'
@@ -28,7 +29,7 @@ findModes <- function(b_exp, b_out,
                       se_exp, se_out, 
                       b_exp_st = b_exp, b_out_st = b_out, 
                       se_exp_st = se_exp, se_out_st = se_out, 
-                      mode.lmts = c(-2, 2),
+                      mode.lmts = c(-5, 5),
                       cor.mat = NULL, 
                       loss.function = c("tukey", "l2", "huber"), 
                       k = switch(loss.function[1], 
@@ -36,7 +37,7 @@ findModes <- function(b_exp, b_out,
                                  tukey = 3), 
                       beta.mode = NULL,
                       include.thres = 1.4, exclude.thres = qnorm(0.975),
-                      map.marker = T, ldThres = 0.9, p.thres = NULL, npoints = 5000) {
+                      map.marker = T, ldThres = 0.9, p.thres = NULL, npoints = 10000) {
 
   tau2 <- 0
   b_exp <- as.matrix(b_exp)

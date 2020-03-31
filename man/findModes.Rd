@@ -6,11 +6,11 @@
 \usage{
 findModes(b_exp, b_out, se_exp, se_out, b_exp_st = b_exp,
   b_out_st = b_out, se_exp_st = se_exp, se_out_st = se_out,
-  mode.lmts = c(-2, 2), cor.mat = NULL, loss.function = c("tukey",
+  mode.lmts = c(-5, 5), cor.mat = NULL, loss.function = c("tukey",
   "l2", "huber"), k = switch(loss.function[1], l2 = NA, huber = 1.345,
   tukey = 3), beta.mode = NULL, include.thres = 1.4,
   exclude.thres = qnorm(0.975), map.marker = T, ldThres = 0.9,
-  p.thres = NULL, npoints = 5000)
+  p.thres = NULL, npoints = 10000)
 }
 \arguments{
 \item{b_exp}{A vector of length \code{p} for the effect sizes of \code{p} number of independent SNPs on the risk factor}
@@ -46,6 +46,8 @@ findModes(b_exp, b_out, se_exp, se_out, b_exp_st = b_exp,
 \item{ldThres}{the parameter passed to the \code{queryhaploReg} function. Increase to 1 when there is a "timeout" error.}
 
 \item{mode_lmts}{The range of \code{beta} that the modes are searched from. Default is \code{c(-2, 2)}}
+
+\item{npoints:}{number of equally spaced points chosen for grid search of modes within the range \code{mode.lmts}.}
 }
 \value{
 A list of the modes, RAP plot and the markers
