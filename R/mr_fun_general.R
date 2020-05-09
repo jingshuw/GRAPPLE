@@ -309,7 +309,7 @@ rho.huber <- function(r, k = 1.345, deriv = 0) {
 #' Tukey's beweight loss function and its derivatives
 #'
 #' @import stats
-#' @keywords internal
+#' @export
 #'
 rho.tukey <- function(r, k = 4.685, deriv = 0) {
     if (deriv == 0) {
