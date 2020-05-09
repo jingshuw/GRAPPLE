@@ -9,4 +9,3 @@ rho.tukey(r, k = 4.685, deriv = 0)
 \description{
 Tukey's beweight loss function and its derivatives
 }
-\keyword{internal}
