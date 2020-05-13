@@ -6,6 +6,16 @@
 \usage{
 rho.tukey(r, k = 4.685, deriv = 0)
 }
+\arguments{
+\item{r}{Function value}
+
+\item{k}{Tuning parameter, default value is 4.685}
+
+\item{deriv}{The derivative function to calculate. 0 is the Tukey's loss function, 1 is for the first derivative and 2 for the second derivative function}
+}
+\value{
+The value of the corresponding function at \code{r}
+}
 \description{
 Tukey's beweight loss function and its derivatives
 }

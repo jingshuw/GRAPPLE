@@ -5,36 +5,45 @@
 \title{Robust multivariate MR estimation}
 \usage{
 grappleRobustEst(b_exp, b_out, se_exp, se_out, tau2 = NULL,
-  cor.mat = NULL, loss.function = c("l2", "huber", "tukey"),
+  cor.mat = NULL, loss.function = c("tukey", "huber", "l2"),
   k = switch(loss.function[1], l2 = NA, huber = 1.345, tukey = 4.685),
-  suppress.warning = FALSE, diagnosis = FALSE, niter = 20,
-  tol = .Machine$double.eps^0.5, opt.method = "L-BFGS-B")
+  niter = 20, tol = .Machine$double.eps^0.5, opt.method = "L-BFGS-B",
+  diagnosis = FALSE)
 }
 \arguments{
-\item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of independent SNPs on \code{k} risk factors}
+\item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors}
 
-\item{b_out}{A vector of length \code{p} for the effect sizes of the \code{p} SNPs on the outcome}
+\item{b_out}{A vector of length \code{p} for the effect sizes of the selected \code{p} SNPs on the disease (outcome)}
 
-\item{se_exp}{A matrix of size \code{p * k} for the standard deviations of the effect sizes in \code{b_exp}}
+\item{se_exp}{A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp}}
 
-\item{se_out}{A vector of length \code{p} for the standard deviations of the effect sizes in \code{b_out}}
+\item{se_out}{A vector of length \code{p} for the standard deviations of each element in \code{b_out}}
 
-\item{tau2}{The dispersion parameter, by default to be estimated from the function}
+\item{tau2}{The dispersion parameter. The default value is NULL, which is to be determined automatically}
 
-\item{cor.mat}{Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The correlation matrix of estimated effect sizes on the \code{k} risk factors and the outcome. Default is NULL, for the identity matrix}
+\item{cor.mat}{Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Default is NULL, for the identity matrix}
 
-\item{loss.function}{Loss function used, one of "l2", "huber" and "tukey"}
+\item{loss.function}{Loss function used, one of "tukey", "huber" or "l2". Default is "tukey", which is robust to outlier SNPs with large pleiotropic effects}
 
 \item{k}{Tuning parameters of the loss function, for loss "l2", it is NA, for loss "huber", default is 1.345 and for loss "tukey", default is 4.685}
 
-\item{suppress.warning}{Whether suppress warning messages or not, default is FALSE}
-
-\item{diagnosis}{Run diagnosis analysis based on the residuals or not, default is FALSE}
-
-\item{niter}{Number of iterations for optimization. Default is 20}
+\item{niter}{Number of maximum iterations allowed for optimization. Default is 20}
 
 \item{tol}{Tolerance for convergence, default is the square root of the smallest positive floating number depending on the machine R is running on}
+
+\item{opt.method}{the optimization used, which is one of choices the R function \code{optim} accepts. Default value is "L-BFGS-B".}
+
+\item{diagnosis}{Run diagnosis analysis based on the residuals or not, default is FALSE}
+}
+\value{
+A list with elements
+\item{beta.hat}{Point estimates of \code{beta}}
+\item{tau2.hat}{Point estimates of the pleiotropic effect variance \code{tau2} if the argument \code{tau2} is set to NULL}
+\item{beta.variance}{Estimated covariance matrix of \code{beta.hat}}
+\item{tau2.se}{Estimated standard deviation of \code{tau2.hat}}
+\item{beta.p.vaue}{A vector of p-values where the kth element is the p-value for whether \code{beta_k = 0}}
+\item{std.resid}{Returned if \code{diagnosis} is TRUE. A vector of standardized residuals of each SNP}
 }
 \description{
-Robust multivariate MR estimation
+The main function of GRAPPLE to estimate causal effects of risk factors \code{beta} under a random effect model of the pleiotropic effects.
 }
