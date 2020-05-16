@@ -1,17 +1,11 @@
 #' Use the multiple modes of the robust profile likelihood function to find out multiple pathways in MR and their marker SNPs.
 #'
-#' @param b_exp A vector of length \code{p} for the effect sizes of \code{p} number of independent SNPs on the risk factor
-#' @param b_out A vector of length \code{p} for the effect sizes of the \code{p} SNPs on the outcome
-#' @param se_exp A vector of length \code{p} for the standard deviations of the effect sizes in \code{b_exp} 
-#' @param se_out A vector of length \code{p} for the standard deviations of the effect sizes in \code{b_out} 
-#' @param b_exp_st A vector of length \code{q} for the effect sizes of \code{q} candidates SNPs on the risk factor where the marker SNPs are selected from. Default is the same as \code{b_exp}
-#' @param b_out_st A vector of length \code{q} for the effect sizes of the \code{q} same list of SNPs as \code{b_exp_st} on the outcome, default is the same as \code{b_out}
-#' @param se_exp_st A vector of length \code{q} for the standard deviations of the effect sizes in \code{b_exp_st}, default is the same as \code{se_exp} 
-#' @param se_out_st A vector of length \code{q} for the standard deviations of the effect sizes in \code{b_out_st}, default is the same as \code{se_out}
-#' @param mode_lmts The range of \code{beta} that the modes are searched from. Default is \code{c(-2, 2)}
-#' @param cor.mat Either NULL or a 2 by 2 symmetric matrix. The correlation matrix of estimated effect sizes on the isk factor and the outcome. Default is NULL, for the identity matrix
-#' @param loss.function Loss function used, one of "l2", "huber" and "tukey". Default is "tukey". One should use "tukey" or "huber" in order to find multiple modes
-#' @param k Tuning parameters of the loss function, for loss "l2", it is NA, for loss "huber", default is 1.345 and for loss "tukey", default is 3. 
+#' THis function can be run only for \code{k = 1} when there is only one risk factor
+#'
+#' @inheritParams grappleRobustEst
+#' @param marker.data A list of the data used to find markers. Default is NULL, which is using the same sets of SNPs as find the modes for finding the markers. Another choice is to pass the output \code{marer.data} from the grapple function \code{getInput}. If the user wants to provide his/her own list, then it should be a list containing 4 elements, \code{b_exp}, \code{b_out}, \code{se_exp} and \code{se_out}.
+#' @param mode_lmts The range of \code{beta} that the modes are searched from. Default is \code{c(-5, 5)}
+#' @param k.findmodes Tuning parameters of the loss function, for loss "l2", it is NA, for loss "huber", default is 1.345 and for loss "tukey", default is 3. 
 #' @param beta.mode Allow providing values of the modes to find out marker SNPs for any given modes
 #' @param include.thres Absolute value upper threshold of the standardized test statistics of one SNP on one mode for the SNP to be included as a marker for that mode, default is 1.4
 #' @param exclude.thres Absolute value lower threshold of the standardized test statistics of one SNP on other modes for the SNP to be included as a marker for that mode, default is \code{qnorm(0.975)}
@@ -19,7 +13,13 @@
 #' @param ldThres the parameter passed to the \code{queryhaploReg} function. Increase to 1 when there is a "timeout" error.
 #' @param npoints: number of equally spaced points chosen for grid search of modes within the range \code{mode.lmts}.
 #'
-#' @return A list of the modes, RAP plot and the markers
+#' @return A list containing the following elements:
+#' \item{fun}{}
+#' \item{modes}{}
+#' \item{p}{}
+#' \item{markers}{}
+#' \item{raw.modes}{}
+#' \item{supp_gwas}{}
 #'
 #' @import ggplot2 
 #' @importFrom ggrepel geom_text_repel
@@ -27,137 +27,151 @@
 #' @export
 findModes <- function(b_exp, b_out, 
                       se_exp, se_out, 
-                      b_exp_st = b_exp, b_out_st = b_out, 
-                      se_exp_st = se_exp, se_out_st = se_out, 
-                      mode.lmts = c(-5, 5),
+					  marker.data = NULL,                      
+					  mode.lmts = c(-5, 5),
                       cor.mat = NULL, 
-                      loss.function = c("tukey", "l2", "huber"), 
-                      k = switch(loss.function[1], 
+                      loss.function = c("tukey", "huber", "l2"), 
+                      k.findmodes = switch(loss.function[1], 
                                  l2 = NA, huber = 1.345, 
                                  tukey = 3), 
                       beta.mode = NULL,
-                      include.thres = 1.4, exclude.thres = qnorm(0.975),
-                      map.marker = T, ldThres = 0.9, p.thres = NULL, npoints = 10000) {
+                      include.thres = 1, exclude.thres = 2,
+                      map.marker = T, ldThres = 0.9, #p.thres = NULL, 
+					  npoints = 10000) {
 
-  tau2 <- 0
-  b_exp <- as.matrix(b_exp)
-  se_exp <- as.matrix(se_exp)
-  b_exp_st <- as.matrix(b_exp_st)
-  se_exp_st <- as.matrix(se_exp_st)
+	tau2 <- 0
+	b_exp <- as.matrix(b_exp)
+	se_exp <- as.matrix(se_exp)
 
-  loss.function <- match.arg(loss.function, c("tukey", "l2", "huber"))
-  if (is.null(cor.mat))
-    cor.mat <- diag(rep(1, ncol(b_exp) + 1))
-  rho <- switch(loss.function,
-                l2 = function(r, ...) rho.l2(r, ...),
-                huber = function(r, ...) rho.huber(r, k, ...),
-                tukey = function(r, ...) rho.tukey(r, k, ...))
+	if (ncol(b_exp) > 1)
+		stop("Finding modes is currentl available only for 
+			 univariate MR with only one risk factor!")
 
-  delta <- integrate(function(x)  rho(x) * dnorm(x), -Inf, Inf)$value
+	# b_exp_st <- as.matrix(b_exp_st)
+	# se_exp_st <- as.matrix(se_exp_st)
 
-  c1 <- integrate(function(x) rho(x, deriv = 1)^2 * dnorm(x), -Inf, Inf)$value
-  c2 <- integrate(function(x) rho(x)^2 * dnorm(x), -Inf, Inf)$value - delta^2
-  c4 <- integrate(function(x) rho(x, deriv = 1) * x * dnorm(x), -Inf, Inf)$value
-  c3 <- c4
+	loss.function <- match.arg(loss.function, c("tukey", "huber", "l2"))
+	if (is.null(cor.mat))
+		cor.mat <- diag(rep(1, ncol(b_exp) + 1))
+	rho <- switch(loss.function,
+				  l2 = function(r, ...) rho.l2(r, ...),
+				  huber = function(r, ...) rho.huber(r, k, ...),
+				  tukey = function(r, ...) rho.tukey(r, k, ...))
+
+	delta <- integrate(function(x)  rho(x) * dnorm(x), -Inf, Inf)$value
+
+	c1 <- integrate(function(x) rho(x, deriv = 1)^2 * dnorm(x), -Inf, Inf)$value
+	c2 <- integrate(function(x) rho(x)^2 * dnorm(x), -Inf, Inf)$value - delta^2
+	c4 <- integrate(function(x) rho(x, deriv = 1) * x * dnorm(x), -Inf, Inf)$value
+	c3 <- c4
 
 
   ## First, calculate t for each SNP
-  t_fun <- function(beta, tau2) {
-    upper <- b_out - b_exp %*% beta
-    temp <- t(t(cbind(se_exp, se_out)) * c(-beta, 1))
-    lower <- sqrt(rowSums((temp %*% cor.mat) * temp) + tau2)
-    return(upper/lower)
-  }
+	t_fun <- function(beta, tau2) {
+		upper <- b_out - b_exp %*% beta
+		temp <- t(t(cbind(se_exp, se_out)) * c(-beta, 1))
+		lower <- sqrt(rowSums((temp %*% cor.mat) * temp) + tau2)
+		return(upper/lower)
+	}
 
-  t_fun_st <- function(beta, tau2) {
-    upper <- b_out_st - b_exp_st %*% beta
-    temp <- t(t(cbind(se_exp_st, se_out_st)) * c(-beta, 1))
-    lower <- sqrt(rowSums((temp %*% cor.mat) * temp) + tau2)
-    return(upper/lower)
-  }
+	if (is.null(marker.data)) 
+		marker.data <- list(b_exp = b_exp,
+							se_sep = se_exp,
+							b_out = b_out,
+							b_se = b_se)
 
-
-
-  robust.optfun.fixtau <- function(beta, tau2) {
-    -sum(rho(t_fun(beta, tau2)))
-  }
-
-  ## Take npoints equally spaced points to do grid search to check for modes
-  beta.seq <- seq(mode.lmts[1], mode.lmts[2], length.out = npoints)
-  val <- sapply(beta.seq, function(beta) robust.optfun.fixtau(beta, tau2))
-  mode.pos <- findLocalModes(val)
-  temp.data <- data.frame(beta = beta.seq, likelihood = val)
-
-  llk.limit <- range(val)
+	t_fun_marker <- function(beta, tau2) {
+			upper <-marker.data$b_out - marker.data$b_exp %*% beta
+			temp <- t(t(cbind(marker.data$se_exp, marker.data$se_out)) * c(-beta, 1))
+			lower <- sqrt(rowSums((temp %*% cor.mat) * temp) + tau2)
+			return(upper/lower)
+		}
 
 
 
-  if (is.null(beta.mode))
-    beta.mode <- beta.seq[mode.pos]
+	robust.optfun.fixtau <- function(beta, tau2) {
+		-sum(rho(t_fun(beta, tau2)))
+	}
 
-  res.mat <- sapply(beta.mode, function(beta) t_fun_st(beta,0))
-  if (length(beta.mode) == 1)
-    res.mat <- as.matrix(res.mat)
-  colnames(res.mat) <- beta.mode
+	## Take npoints equally spaced points to do grid search to check for modes
+	beta.seq <- seq(mode.lmts[1], mode.lmts[2], length.out = npoints)
+	val <- sapply(beta.seq, function(beta) robust.optfun.fixtau(beta, tau2))
+	mode.pos <- findLocalModes(val)
+	temp.data <- data.frame(beta = beta.seq, likelihood = val)
 
-  rownames(res.mat) <- rownames(b_exp_st)
-
-  ss <- which(rowSums(abs(res.mat) < exclude.thres) == 1 & 
-			  rowSums(abs(res.mat) < include.thres) > 0)
-
-  res.mat <- res.mat[ss, , drop = F]
-  markers <- as.data.frame(abs(res.mat) < include.thres)
-
-  keep.mode <- colSums(markers) > 0
-
-  print(paste("The modes of beta are:", paste(beta.mode[keep.mode], collapse = ",")))
+	llk.limit <- range(val)
 
 
-  markers <- markers[, keep.mode, drop = F]
 
-  tmp.range <- max(beta.mode) - min(beta.mode)
+	if (is.null(beta.mode))
+		beta.mode <- beta.seq[mode.pos]
 
+	res.mat <- sapply(beta.mode, function(beta) t_fun_marker(beta,0))
+	if (length(beta.mode) == 1)
+		res.mat <- as.matrix(res.mat)
+	colnames(res.mat) <- beta.mode
 
-  tmp.lines <- data.frame(modes = beta.mode[keep.mode],
-						  mod.col = as.factor(beta.mode[keep.mode]))
-  p <- ggplot2::ggplot(aes(x = beta, y = likelihood), data = temp.data) + geom_line() + 
-  geom_vline(xintercept = 0) + 
-  geom_vline(data = tmp.lines,
-			 map = aes(xintercept = modes, color = mod.col), linetype = "dashed") + 
-  geom_vline(xintercept = beta.mode[!keep.mode], color = "gray", linetype = "dashed") + 
-  labs(y = "Profile lieklihood") +
- # annotate("text", x = mode.lmts[1] * 0.75 + mode.lmts[2] * 0.25,
- #          y = sum(range(temp.data$likelihood) * c(0.25, 0.75)), 
-#		   label = paste(length(b_out), "SNPs")) +  
-  theme(axis.line = element_line(linetype = "solid"),          
-      axis.text.y=element_blank(),
-      axis.ticks.y=element_blank(),
-      legend.position="none",
-      panel.background=element_blank(),
-      panel.border=element_blank(),
-      panel.grid.major=element_blank(),
-      panel.grid.minor=element_blank(),
-      plot.background=element_blank(),
-	  plot.title=element_text(size = 11))
+	rownames(res.mat) <- rownames(b_exp_st)
 
-  if (!is.null(p.thres))
-	  p <- p + ggtitle(paste0("pvalue threshold:", p.thres))
+	ss <- which(rowSums(abs(res.mat) < exclude.thres) == 1 & 
+				rowSums(abs(res.mat) < include.thres) > 0)
+
+	res.mat <- res.mat[ss, , drop = F]
+	markers <- as.data.frame(abs(res.mat) < include.thres)
+
+	keep.mode <- colSums(markers) > 0
+
+	print(paste("The modes of beta are:", paste(beta.mode[keep.mode], collapse = ",")))
 
 
-  if (ncol(markers) <= 1)
-    map.marker <- F
-  if (map.marker) {
+	markers <- markers[, keep.mode, drop = F]
 
-	p <- p +  xlim(max(mode.lmts[1], min(beta.mode) - 3 * tmp.range), 
+	tmp.range <- max(beta.mode) - min(beta.mode)
+
+
+	tmp.lines <- data.frame(modes = beta.mode[keep.mode],
+							mod.col = as.factor(beta.mode[keep.mode]))
+	p <- ggplot2::ggplot(aes(x = beta, y = likelihood), data = temp.data) + geom_line() + 
+		geom_vline(xintercept = 0) + 
+		geom_vline(data = tmp.lines,
+				   map = aes(xintercept = modes, color = mod.col), linetype = "dashed") + 
+			 geom_vline(xintercept = beta.mode[!keep.mode], color = "gray", linetype = "dashed") + 
+			 labs(y = "Profile lieklihood") +
+			 # annotate("text", x = mode.lmts[1] * 0.75 + mode.lmts[2] * 0.25,
+			 #          y = sum(range(temp.data$likelihood) * c(0.25, 0.75)), 
+			 #		   label = paste(length(b_out), "SNPs")) +  
+			 theme(axis.line = element_line(linetype = "solid"),          
+				   axis.text.y=element_blank(),
+				   axis.ticks.y=element_blank(),
+				   legend.position="none",
+				   panel.background=element_blank(),
+				   panel.border=element_blank(),
+				   panel.grid.major=element_blank(),
+				   panel.grid.minor=element_blank(),
+				   plot.background=element_blank(),
+				   plot.title=element_text(size = 11))
+
+#  if (!is.null(p.thres))
+#	  p <- p + ggtitle(paste0("pvalue threshold:", p.thres))
+
+
+	if (ncol(markers) <= 1)
+		map.marker <- F
+	if (map.marker) {
+
+	
+
+		p <- p +  xlim(max(mode.lmts[1], min(beta.mode) - 3 * tmp.range), 
 					   min(mode.lmts[2], max(beta.mode) + 3 * tmp.range)) 
 
 
-    snp_ids <- rownames(markers)
+		snp_ids <- rownames(markers)
 
   	## map to HaploReg
 	
     results <- queryHaploreg(query = snp_ids, ldThres = ldThres)
-	results <- as.data.frame(results[, c("rsID", "chr", "pos_hg38", "GENCODE_name", "gwas", "dbSNP_functional_annotation",
+	results <- as.data.frame(results[, c("rsID", "chr", "pos_hg38", "GENCODE_name", 
+										 "gwas", "dbSNP_functional_annotation",
 										 "is_query_snp", "r2")],
 							 stringsAsFactors = F)
 	tt <- strsplit(results$gwas, split = ";")
@@ -178,7 +192,8 @@ findModes <- function(b_exp, b_out,
 	results.supp <- results.supp[order(results.supp$GENCODE_name), ]
 
 	markers <- cbind(markers, res.mat)
-	colnames(markers) <- c(paste0("Mode", 1:sum(keep.mode), "_marker"), paste0("Mode", 1:sum(keep.mode), "_stats"))
+	colnames(markers) <- c(paste0("Mode", 1:sum(keep.mode), "_marker"), 
+						   paste0("Mode", 1:sum(keep.mode), "_stats"))
     markers <- cbind(results, data.frame(markers)[results$rsID, ], ss)
 	res.mat <- data.frame(res.mat)[markers$rsID, ]
 
@@ -221,15 +236,12 @@ findModes <- function(b_exp, b_out,
 	  }
 	  tmp.est1 <- tmp.est[idx, ]
 
-	  p <- p + geom_point(data = tmp.est, mapping = aes(x = x, y= y, col = col, fill = col), shape = "|", size = 2) + 
-		  geom_text_repel(data = tmp.est1, mapping = aes(x= x, y= y, label = genes, col = col), inherit.aes = F)
+	  p <- p + geom_point(data = tmp.est, mapping = aes(x = x, y= y, col = col, 
+														fill = col), shape = "|", size = 2) + 
+		  geom_text_repel(data = tmp.est1, mapping = aes(x= x, y= y, label = genes, 
+														 col = col), inherit.aes = F)
 		   
   }
-
-
- 
-
-
 
   return(list(fun = robust.optfun.fixtau,
               modes = beta.mode[keep.mode],
@@ -237,9 +249,6 @@ findModes <- function(b_exp, b_out,
               p = p,
               markers = markers,
 			  supp_gwas = results.supp))
-            #  markers.full = markers.full,
-            #  res.mat = res.mat))
-
 }
 
 

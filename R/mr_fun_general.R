@@ -2,10 +2,12 @@
 #'
 #' The main function of GRAPPLE to estimate causal effects of risk factors \code{beta} under a random effect model of the pleiotropic effects.
 #'
-#' @param b_exp A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors
+#' @param b_exp A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors. SNPs should be provided after clumping. 
 #' @param b_out A vector of length \code{p} for the effect sizes of the selected \code{p} SNPs on the disease (outcome)
 #' @param se_exp A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp} 
 #' @param se_out A vector of length \code{p} for the standard deviations of each element in \code{b_out}
+#' @param p.thres P-value threshold for SNP selection. Default is NULL, which is using all data provided. If not NULL, \code{sel.pvals} need to be provided. If \code{p.thres} is a scalar, then SNPs with \code{sel.pvals} less than \code{p.thres} are selected. If \code{p.thres} has two elements, then the first element is used as the lower bound and the second used as the upper bound. 
+#' @param sel.pvals A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Must be provided if \code{p.thres} is not NULL. 
 #' @param tau2 The dispersion parameter. The default value is NULL, which is to be determined automatically 
 #' @param cor.mat Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Default is NULL, for the identity matrix
 #' @param loss.function Loss function used, one of "tukey", "huber" or "l2". Default is "tukey", which is robust to outlier SNPs with large pleiotropic effects
@@ -27,6 +29,8 @@
 #' @export
 grappleRobustEst <- function(b_exp, b_out, 
                              se_exp, se_out,
+							 p.thres = NULL,
+							 sel.pvals = NULL,
                              tau2 = NULL,
                              cor.mat = NULL, 
                              loss.function = c("tukey", "huber", "l2"), 
@@ -37,11 +41,33 @@ grappleRobustEst <- function(b_exp, b_out,
                              tol = .Machine$double.eps^0.5,
                              opt.method = "L-BFGS-B",
                              diagnosis = FALSE) {
-    b_exp <- as.matrix(b_exp)
-    se_exp <- as.matrix(se_exp)
+
+	b_exp <- as.matrix(b_exp)
+	se_exp <- as.matrix(se_exp)
 	b_out <- as.vector(b_out)
 	se_out <- as.vector(se_out)
 
+
+	if (!is.null(p.thres)) {
+		if (is.null(sel.pvals))
+			stop("Please provide the list of p-values for selection")
+		else {
+			if (length(p.thres == 1))
+				idx <- which(sel.pvals < p.thres)
+			else if (length(p.thres) == 2)
+				idx <- which(sel.pvals >= p.thres[1] & sel.pvals < p.thres[2])
+			if (length(p.thres) > 2 || length(idx) == 0)
+				stop("Please provide valid p-value thresholds")
+		}
+	} else
+		idx <- 1:nrow(b_exp)
+
+	b_exp <- b_exp[idx, , drop = F]
+	se_exp <- se_exp[idx, , drop = F]
+	b_out <- b_out[idx]
+	se_out <- se_out[idx]
+
+ 
     loss.function <- match.arg(loss.function, c("tukey", "huber", "l2"))
     if (is.null(cor.mat))
       cor.mat <- diag(rep(1, ncol(b_exp) + 1))
