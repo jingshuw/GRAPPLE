@@ -4,20 +4,25 @@
 \alias{grappleRobustEst}
 \title{Robust multivariate MR estimation}
 \usage{
-grappleRobustEst(b_exp, b_out, se_exp, se_out, tau2 = NULL,
-  cor.mat = NULL, loss.function = c("tukey", "huber", "l2"),
+grappleRobustEst(b_exp, b_out, se_exp, se_out, p.thres = NULL,
+  sel.pvals = NULL, tau2 = NULL, cor.mat = NULL,
+  loss.function = c("tukey", "huber", "l2"),
   k = switch(loss.function[1], l2 = NA, huber = 1.345, tukey = 4.685),
   niter = 20, tol = .Machine$double.eps^0.5, opt.method = "L-BFGS-B",
   diagnosis = FALSE)
 }
 \arguments{
-\item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors}
+\item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors. SNPs should be provided after clumping.}
 
 \item{b_out}{A vector of length \code{p} for the effect sizes of the selected \code{p} SNPs on the disease (outcome)}
 
 \item{se_exp}{A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp}}
 
 \item{se_out}{A vector of length \code{p} for the standard deviations of each element in \code{b_out}}
+
+\item{p.thres}{P-value threshold for SNP selection. Default is NULL, which is using all data provided. If not NULL, \code{sel.pvals} need to be provided. If \code{p.thres} is a scalar, then SNPs with \code{sel.pvals} less than \code{p.thres} are selected. If \code{p.thres} has two elements, then the first element is used as the lower bound and the second used as the upper bound.}
+
+\item{sel.pvals}{A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Must be provided if \code{p.thres} is not NULL.}
 
 \item{tau2}{The dispersion parameter. The default value is NULL, which is to be determined automatically}
 

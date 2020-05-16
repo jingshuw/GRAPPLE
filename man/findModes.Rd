@@ -4,36 +4,29 @@
 \alias{findModes}
 \title{Use the multiple modes of the robust profile likelihood function to find out multiple pathways in MR and their marker SNPs.}
 \usage{
-findModes(b_exp, b_out, se_exp, se_out, b_exp_st = b_exp,
-  b_out_st = b_out, se_exp_st = se_exp, se_out_st = se_out,
+findModes(b_exp, b_out, se_exp, se_out, marker.data = NULL,
   mode.lmts = c(-5, 5), cor.mat = NULL, loss.function = c("tukey",
-  "l2", "huber"), k = switch(loss.function[1], l2 = NA, huber = 1.345,
-  tukey = 3), beta.mode = NULL, include.thres = 1.4,
-  exclude.thres = qnorm(0.975), map.marker = T, ldThres = 0.9,
-  p.thres = NULL, npoints = 10000)
+  "huber", "l2"), k.findmodes = switch(loss.function[1], l2 = NA, huber =
+  1.345, tukey = 3), beta.mode = NULL, include.thres = 1,
+  exclude.thres = 2, map.marker = T, ldThres = 0.9,
+  npoints = 10000)
 }
 \arguments{
-\item{b_exp}{A vector of length \code{p} for the effect sizes of \code{p} number of independent SNPs on the risk factor}
+\item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors. SNPs should be provided after clumping.}
 
-\item{b_out}{A vector of length \code{p} for the effect sizes of the \code{p} SNPs on the outcome}
+\item{b_out}{A vector of length \code{p} for the effect sizes of the selected \code{p} SNPs on the disease (outcome)}
 
-\item{se_exp}{A vector of length \code{p} for the standard deviations of the effect sizes in \code{b_exp}}
+\item{se_exp}{A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp}}
 
-\item{se_out}{A vector of length \code{p} for the standard deviations of the effect sizes in \code{b_out}}
+\item{se_out}{A vector of length \code{p} for the standard deviations of each element in \code{b_out}}
 
-\item{b_exp_st}{A vector of length \code{q} for the effect sizes of \code{q} candidates SNPs on the risk factor where the marker SNPs are selected from. Default is the same as \code{b_exp}}
+\item{marker.data}{A list of the data used to find markers. Default is NULL, which is using the same sets of SNPs as find the modes for finding the markers. Another choice is to pass the output \code{marer.data} from the grapple function \code{getInput}. If the user wants to provide his/her own list, then it should be a list containing 4 elements, \code{b_exp}, \code{b_out}, \code{se_exp} and \code{se_out}.}
 
-\item{b_out_st}{A vector of length \code{q} for the effect sizes of the \code{q} same list of SNPs as \code{b_exp_st} on the outcome, default is the same as \code{b_out}}
+\item{cor.mat}{Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Default is NULL, for the identity matrix}
 
-\item{se_exp_st}{A vector of length \code{q} for the standard deviations of the effect sizes in \code{b_exp_st}, default is the same as \code{se_exp}}
+\item{loss.function}{Loss function used, one of "tukey", "huber" or "l2". Default is "tukey", which is robust to outlier SNPs with large pleiotropic effects}
 
-\item{se_out_st}{A vector of length \code{q} for the standard deviations of the effect sizes in \code{b_out_st}, default is the same as \code{se_out}}
-
-\item{cor.mat}{Either NULL or a 2 by 2 symmetric matrix. The correlation matrix of estimated effect sizes on the isk factor and the outcome. Default is NULL, for the identity matrix}
-
-\item{loss.function}{Loss function used, one of "l2", "huber" and "tukey". Default is "tukey". One should use "tukey" or "huber" in order to find multiple modes}
-
-\item{k}{Tuning parameters of the loss function, for loss "l2", it is NA, for loss "huber", default is 1.345 and for loss "tukey", default is 3.}
+\item{k.findmodes}{Tuning parameters of the loss function, for loss "l2", it is NA, for loss "huber", default is 1.345 and for loss "tukey", default is 3.}
 
 \item{beta.mode}{Allow providing values of the modes to find out marker SNPs for any given modes}
 
@@ -45,13 +38,19 @@ findModes(b_exp, b_out, se_exp, se_out, b_exp_st = b_exp,
 
 \item{ldThres}{the parameter passed to the \code{queryhaploReg} function. Increase to 1 when there is a "timeout" error.}
 
-\item{mode_lmts}{The range of \code{beta} that the modes are searched from. Default is \code{c(-2, 2)}}
+\item{mode_lmts}{The range of \code{beta} that the modes are searched from. Default is \code{c(-5, 5)}}
 
 \item{npoints:}{number of equally spaced points chosen for grid search of modes within the range \code{mode.lmts}.}
 }
 \value{
-A list of the modes, RAP plot and the markers
+A list containing the following elements:
+\item{fun}{}
+\item{modes}{}
+\item{p}{}
+\item{markers}{}
+\item{raw.modes}{}
+\item{supp_gwas}{}
 }
 \description{
-Use the multiple modes of the robust profile likelihood function to find out multiple pathways in MR and their marker SNPs.
+THis function can be run only for \code{k = 1} when there is only one risk factor
 }

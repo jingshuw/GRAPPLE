@@ -2,11 +2,13 @@
 % Please edit documentation in R/preprocess.R
 \name{getInput}
 \alias{getInput}
-\title{SNP selection and clumping based on GWAS summary statistics}
+\title{Preprocess GWAS summary statistics datasets}
 \usage{
 getInput(sel.files, exp.files, out.file, plink_exe, plink_refdat,
-  p.thres = 0.01, clump.directly = F, clump_r2 = 0.001,
-  keep.pval0.snps = F)
+  max.p.thres = 0.01, cal.cor = T, p.thres.cor = 0.5,
+  get.marker.candidates = T, sample.split.marker.candidates = F,
+  marker.p.thres = 1e-05, clump_r2 = 0.001,
+  clump_r2_formarkers = 0.05)
 }
 \arguments{
 \item{sel.files}{A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors SNP selection. Each GWAS file is an ".rda", ".rData", ".csv" or ".txt" file containing an R object of name "dat". The "dat" object is a data frame that at least has a column "SNP" for the SNP ids, "pval" for the p-values.}
@@ -19,17 +21,31 @@ getInput(sel.files, exp.files, out.file, plink_exe, plink_refdat,
 
 \item{plink_refdat}{The reference files (.bed, .bim, .fam) for PLINK}
 
-\item{p.thres}{The upper threshold of the selection p-values for a SNP to be selected before clumping. It only requires that at least one of the p-values of the risk factors of the SNPs to be below the threshold.}
+\item{max.p.thres}{The upper threshold of the selection p-values for a SNP to be selected before clumping. It only requires that at least one of the p-values of the risk factors of the SNPs to be below the threshold. Default is \code{0.01}.}
 
-\item{clump.directly}{Whether the clump is done directly on the union of selection files SNPs, or the intersection of the SNPs in any of the selection files, the SNPs in any of the exposure files and the SNPs in the outcome GWAS data file. Default is FALSE}
+\item{cal.cor}{Whether calculate the \code{(k + 1)} by \code{(k + 1)} correlation matrix between the \code{k} risk factors and the outcome. The default is TRUE}
 
-\item{clump_r2}{The clumping r2 threshold in PLINK. Default is set to 0.001 for selection of independent SNPs, and can be set to a higher value when select candidate SNPs for the marker SNPs.}
+\item{p.thres.cor}{The lower threshold of the p-values for a SNP to be used in calculating the correlation matrix}
 
-\item{keep.pval0.snp}{Whether keep all the SNPs whose minimum selection p-values is 0. Useful for selection of marker SNPs when set to TRUE. Default is FALSE}
+\item{get.marker.candidates}{Whether getting SNPs which are used for mode marker selection. Only applies to cases where the number of risk factors \code{k = 1}. Default is TRUE for \code{k = 1}.}
+
+\item{marker.p.thres}{Selection threshold of p-values for mode markers. Default is \code{1e-5}.}
+
+\item{clump_r2}{The clumping r2 threshold in PLINK for genetic instrument selection. Default is set to 0.001 for selection of independent SNPs.}
+
+\item{clump_r2_formarkers}{The clumping r2 threshold in PLINK. Default is set to 0.05 for selection of candidates for the marker SNPs.}
 }
 \value{
-A list of selected summary statistics
+A list of selected summary statistics, which includes
+\item{b_exp} A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors (exposures)
+\item{se_exp} A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp} 
+\item{b_out} A vector of size \code{p} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on the disease (outcome)
+\item{se_out} A vector of size \code{p} for the standard deviations of each entry in \code{b_out} 
+\item{meta_data} A data frame for the information of selected SNPs containing 3 columns, the SNP rsID, the effect allele and other allele after harmonizing (where the \code{b_exp} and \code{b_out} are the effects of the effect_alleles). 
+\item{sel.pvals} A vector of size \code{p} for p-values of selected SNPs obtained from the selection files. When there are \code{k > 1} selection files, each p-value is the Bonferronni combination of \code{k} p-values
+\item{marker.data} A list of data for marker candidate SNPs, whose elements are \code{b_exp}, \code{se_exp}, \code{b_out}, \code{se_out}, \code{meta_data} and \code{sel.pvals}
+\item{cor.mat} The estimated \code{(k + 1)} by \code{(k + 1)} correlation matrix between the \code{k} risk factors and the disease (outcome) shared by SNPs. The last column is for the outcome trait.
 }
 \description{
-SNP selection and clumping based on GWAS summary statistics
+This function has GWAS summary statistics data files as inputs, perform genetic instrument selection and return matrices that are ready to use for GRAPPLE
 }
