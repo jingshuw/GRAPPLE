@@ -253,6 +253,8 @@ getInput <- function(sel.files,
 	#	se_exp <- se_exp[-sel.SNPs.cor, , drop = F]
 	} else
 		corr <- NULL
+
+	data.sel <- data.frame(SNP = sel.SNPs, pval = pvals)
  
 	data.sel <- plink_clump(data.sel, plink_exe, 
 							plink_refdat, clump_r2 = clump_r2)
@@ -268,6 +270,8 @@ getInput <- function(sel.files,
 			marker.SNPs <- names(marker.pvals)
 		} else
 			marker.pvals <- marker.pvals * length(exp.files)
+
+		data.sel <- data.frame(SNP = marker.SNPs, pval = marker.pvals)
 		data.sel <- plink_clump(data.sel, plink_exe, 
 								plink_refdat, 
 								clump_r2 = clump_r2_formarkers)
@@ -299,7 +303,6 @@ getInput <- function(sel.files,
 	marker.pvals <- marker.pvals[marker.SNPs]
 	names(marker.pvals) <- marker.SNPs
 
-	print(head(marker.pvals))
 
 	gc(full = F)
 

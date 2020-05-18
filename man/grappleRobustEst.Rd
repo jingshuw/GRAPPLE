@@ -24,11 +24,11 @@ grappleRobustEst(input.list = NULL, b_exp = NULL, b_out = NULL,
 
 \item{p.thres}{P-value threshold for SNP selection. Default is NULL, which is using all data provided. If not NULL, \code{sel.pvals} need to be provided. If \code{p.thres} is a scalar, then SNPs with \code{sel.pvals} less than \code{p.thres} are selected. If \code{p.thres} has two elements, then the first element is used as the lower bound and the second used as the upper bound.}
 
-\item{sel.pvals}{A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Used when \code{p.thres} is not NULL, while \code{input.list} is NULL.}
+\item{sel.pvals}{A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Used only when \code{p.thres} is not NULL, while \code{input.list} is NULL.}
 
 \item{tau2}{The dispersion parameter. The default value is NULL, which is to be determined automatically}
 
-\item{cor.mat}{Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Default is NULL, for the identity matrix}
+\item{cor.mat}{Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Used only when \code{input.list} is NULL and the default value is NULL, for the identity matrix.}
 
 \item{loss.function}{Loss function used, one of "tukey", "huber" or "l2". Default is "tukey", which is robust to outlier SNPs with large pleiotropic effects}
 

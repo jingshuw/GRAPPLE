@@ -8,9 +8,9 @@
 #' @param se_exp A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp}. Used only when \code{input.list} is NULL. 
 #' @param se_out A vector of length \code{p} for the standard deviations of each element in \code{b_out}. Used only when \code{input.list} is NULL. 
 #' @param p.thres P-value threshold for SNP selection. Default is NULL, which is using all data provided. If not NULL, \code{sel.pvals} need to be provided. If \code{p.thres} is a scalar, then SNPs with \code{sel.pvals} less than \code{p.thres} are selected. If \code{p.thres} has two elements, then the first element is used as the lower bound and the second used as the upper bound. 
-#' @param sel.pvals A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Used when \code{p.thres} is not NULL, while \code{input.list} is NULL. 
+#' @param sel.pvals A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Used only when \code{p.thres} is not NULL, while \code{input.list} is NULL. 
 #' @param tau2 The dispersion parameter. The default value is NULL, which is to be determined automatically 
-#' @param cor.mat Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Default is NULL, for the identity matrix
+#' @param cor.mat Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Used only when \code{input.list} is NULL and the default value is NULL, for the identity matrix.
 #' @param loss.function Loss function used, one of "tukey", "huber" or "l2". Default is "tukey", which is robust to outlier SNPs with large pleiotropic effects
 #' @param k Tuning parameters of the loss function, for loss "l2", it is NA, for loss "huber", default is 1.345 and for loss "tukey", default is 4.685
 #' @param niter Number of maximum iterations allowed for optimization. Default is 20
@@ -50,6 +50,7 @@ grappleRobustEst <- function(input.list = NULL,
 		se_exp <- input.list$se_exp
 		se_out <- input.list$se_out
 		sel.pvals <- input.list$sel.pvals
+		cor.mat <- input.list$cor.mat
 	} else {
 		if (is.null(b_exp) || is.null(b_out) || is.null(se_exp) || is.null(se_out))
 			stop("Require providing either the input.list or all values of b_exp, b_out,

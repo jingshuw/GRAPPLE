@@ -12,7 +12,7 @@
 #' @param exclude.thres Absolute value lower threshold of the standardized test statistics of one SNP on other modes for the SNP to be included as a marker for that mode, default is \code{qnorm(0.975)}
 #' @param map.marker Whether map each marker to the earist gene or not. Default is TRUE if multiple markers are found. It is always FALSE if there is just one mode.
 #' @param ldThres the parameter passed to the \code{queryhaploReg} function. Increase to 1 when there is a "timeout" error.
-#' @param npoints: number of equally spaced points chosen for grid search of modes within the range \code{mode.lmts}.
+#' @param npoints Number of equally spaced points chosen for grid search of modes within the range \code{mode.lmts}.
 #'
 #' @return A list containing the following elements:
 #' \item{fun}{The profile likelihood function with argument \code{beta}}
@@ -53,6 +53,7 @@ findModes <- function(input.list = NULL,
 		se_out <- input.list$se_out
 		sel.pvals <- input.list$sel.pvals
 		marker.data <- input.list$marker.data
+		cor.mat <- input.list$cor.mat
 	} else {
 		if (is.null(b_exp) || is.null(b_out) || is.null(se_exp) || is.null(se_out))
 			stop("Require providing either the input.list or all values of b_exp, b_out,

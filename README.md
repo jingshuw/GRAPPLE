@@ -11,7 +11,7 @@ library(devtools)
 install_github("jingshuw/grapple")
 ```
 
-One may also need to install [PLINK](https://www.cog-genomics.org/plink/) for LD clumping, and prepared a suitable LD clumping reference dataset for PLINK. One resource of the reference dataset of European population that is used in the GRAPPLE paper is the 1000 genome European reference panel which can be downloaded from http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz.
+One may also need to install [PLINK](https://www.cog-genomics.org/plink/) for LD clumping, and prepared a suitable LD clumping reference dataset for PLINK. One resource of the reference dataset of European population that is used in the GRAPPLE paper is the 1000 genome European reference panel which can be downloaded here http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz, from the [MRCIEU cite](https://github.com/MRCIEU/gwas2vcf).
 
 ## Basic Usage
 
@@ -27,8 +27,8 @@ library(grapple)
 sel.file <- "bmi_ukbb_full.csv"
 exp.file <- "bmi_giant_full.csv"
 out.file <- "t2d_morris2012_impute.csv"
-out.file <- "./plink"
-plink.exe <- "./data_maf0.01_rs_ref/data_maf0.01_rs_ref"
+plink.exe <- "./plink"
+plink_refdat <- "./data_maf0.01_rs_ref/data_maf0.01_rs_ref"
 data <- getInput(sel.file, exp.file, out.file, plink.exe, plink_refdat)
 ```
 
