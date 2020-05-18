@@ -11,7 +11,7 @@ library(devtools)
 install_github("jingshuw/grapple")
 ```
 
-One may also need to install [PLINK](https://www.cog-genomics.org/plink/) for LD clumping, and prepared the LD clumping reference datasets for PLINK. One resource that is used in the GRAPPLE paper is the 1000 genome European reference panel which can be download through this link [](http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz).
+One may also need to install [PLINK](https://www.cog-genomics.org/plink/) for LD clumping, and prepared the LD clumping reference datasets for PLINK. One resource that is used in the GRAPPLE paper is the 1000 genome European reference panel which can be download through http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz.
 
 ## Basic Usage
 
