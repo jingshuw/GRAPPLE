@@ -21,7 +21,7 @@
 #' \item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors (exposures)}
 #' \item{se_exp}{A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp}}
 #' \item{b_out}{A vector of size \code{p} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on the disease (outcome)}
-#' \item{se_out}{A vector of size \code{p} for the standard deviations of each entry in \code{b_out} 
+#' \item{se_out}{A vector of size \code{p} for the standard deviations of each entry in \code{b_out}} 
 #' \item{meta_data}{A data frame for the information of selected SNPs containing 3 columns, the SNP rsID, the effect allele and other allele after harmonizing (where the \code{b_exp} and \code{b_out} are the effects of the effect_alleles).}
 #' \item{sel.pvals}{A vector of size \code{p} for p-values of selected SNPs obtained from the selection files. When there are \code{k > 1} selection files, each p-value is the Bonferronni combination of \code{k} p-values.}
 #' \item{marker.data}{A list of data for marker candidate SNPs, whose elements are \code{b_exp}, \code{se_exp}, \code{b_out}, \code{se_out}, \code{meta_data} and \code{sel.pvals}.}
