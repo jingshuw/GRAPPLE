@@ -3,7 +3,8 @@
 #' THis function can be run only for \code{k = 1} when there is only one risk factor
 #'
 #' @inheritParams grappleRobustEst
-#' @param marker.data A list of the data used to find markers. Default is NULL, which is using the same sets of SNPs as find the modes for finding the markers. Another choice is to pass the output \code{marer.data} from the grapple function \code{getInput}. If the user wants to provide his/her own list, then it should be a list containing 4 elements, \code{b_exp}, \code{b_out}, \code{se_exp} and \code{se_out}.
+#' @param marker.data A list of the data used to find markers. Default is NULL, which is using the same sets of SNPs as find the modes for finding the markers. Another choice is to pass the output \code{marer.data} from the grapple function \code{getInput}. If the user wants to provide his/her own list, then it should be a list containing 4 elements, \code{b_exp}, \code{b_out}, \code{se_exp} and \code{se_out}. This argument is used only when \code{input.list} is NULL. If \code{input.list} is non-null, then \code{marker.data} will be set as \code{input.list$marker.data} regardless of the value of this argument.
+#' @param marker.p.thres P-value threshold for marker SNP selection. See \code{p.thres} 
 #' @param mode_lmts The range of \code{beta} that the modes are searched from. Default is \code{c(-5, 5)}
 #' @param k.findmodes Tuning parameters of the loss function, for loss "l2", it is NA, for loss "huber", default is 1.345 and for loss "tukey", default is 3. 
 #' @param beta.mode Allow providing values of the modes to find out marker SNPs for any given modes
@@ -14,20 +15,24 @@
 #' @param npoints: number of equally spaced points chosen for grid search of modes within the range \code{mode.lmts}.
 #'
 #' @return A list containing the following elements:
-#' \item{fun}{}
-#' \item{modes}{}
-#' \item{p}{}
-#' \item{markers}{}
-#' \item{raw.modes}{}
-#' \item{supp_gwas}{}
+#' \item{fun}{The profile likelihood function with argument \code{beta}}
+#' \item{modes}{The position of modes. Only include modes where marker genes can be detected}
+#' \item{p}{The profile likelihood plot with gene markers when there are multiple modes. The range of the x.axis depends on the distance between the maximum mode and minimum mode when there are multiple modes.}
+#' \item{markers}{A data frame of marker information}
+#' \item{raw.modes}{All modes of the profile likelihood function within the range of \code{mode_lmts}}
+#' \item{supp_gwas}{More information about the markers.}
 #'
 #' @import ggplot2 
 #' @importFrom ggrepel geom_text_repel
 #' @importFrom haploR queryHaploreg
 #' @export
-findModes <- function(b_exp, b_out, 
-                      se_exp, se_out, 
-					  marker.data = NULL,                      
+findModes <- function(input.list = NULL,
+					  b_exp = NULL, b_out = NULL, 
+                      se_exp = NULL, se_out = NULL,
+					  p.thres = NULL, 
+					  sel.pvals = NULL,
+					  marker.data = NULL,      
+	  				  marker.p.thres = NULL,	  
 					  mode.lmts = c(-5, 5),
                       cor.mat = NULL, 
                       loss.function = c("tukey", "huber", "l2"), 
@@ -40,12 +45,78 @@ findModes <- function(b_exp, b_out,
 					  npoints = 10000) {
 
 	tau2 <- 0
+
+	if (!is.null(input.list)) {
+		b_exp <- input.list$b_exp
+		b_out <- input.list$b_out
+		se_exp <- input.list$se_exp
+		se_out <- input.list$se_out
+		sel.pvals <- input.list$sel.pvals
+		marker.data <- input.list$marker.data
+	} else {
+		if (is.null(b_exp) || is.null(b_out) || is.null(se_exp) || is.null(se_out))
+			stop("Require providing either the input.list or all values of b_exp, b_out,
+				 se_exp and se_out")
+	}
+
+
 	b_exp <- as.matrix(b_exp)
 	se_exp <- as.matrix(se_exp)
+	b_out <- as.vector(b_out)
+	se_out <- as.vector(se_out)
 
 	if (ncol(b_exp) > 1)
 		stop("Finding modes is currentl available only for 
 			 univariate MR with only one risk factor!")
+
+
+    if (is.null(marker.data)) 
+		marker.data <- list(b_exp = b_exp,
+							se_sep = se_exp,
+							b_out = b_out,
+							b_se = b_se,
+							sel.pvals = sel.pvals)
+
+	if (!is.null(p.thres)) {
+		if (is.null(sel.pvals))
+			stop("Please provide the list of p-values for selection")
+		else {
+			if (length(p.thres == 1))
+				idx <- which(sel.pvals < p.thres)
+			else if (length(p.thres) == 2)
+				idx <- which(sel.pvals >= p.thres[1] & sel.pvals < p.thres[2])
+			if (length(p.thres) > 2 || length(idx) == 0)
+				stop("Please provide valid p-value thresholds")
+		}
+	} else
+		idx <- 1:nrow(b_exp)
+
+	b_exp <- b_exp[idx, , drop = F]
+	se_exp <- se_exp[idx, , drop = F]
+	b_out <- b_out[idx]
+	se_out <- se_out[idx]
+
+	if (!is.null(marker.p.thres)) {
+		if (is.null(marker.data$sel.pvals))
+			stop("Please provide the list of p-values for marker selection")
+		else {
+			if (length(marker.p.thres == 1))
+				idx <- which(marker.data$sel.pvals < marker.p.thres)
+			else if (length(marker.p.thres) == 2)
+				idx <- which(marker.data$sel.pvals >= marker.p.thres[1] & 
+							 marker.data$sel.pvals < marker.p.thres[2])
+			if (length(marker.p.thres) > 2 || length(idx) == 0)
+				stop("Please provide valid p-value thresholds for marker selection.")
+		}
+	} else
+		idx <- 1:nrow(marker.data$b_exp)
+
+	marker.data$b_exp <- marker.data$b_exp[idx, , drop = F]
+	marker.data$se_exp <- marker.data$se_exp[idx, , drop = F]
+	marker.data$b_out <- marker.data$b_out[idx]
+	marker.data$se_out <- marker.data$se_out[idx]
+
+
 
 	# b_exp_st <- as.matrix(b_exp_st)
 	# se_exp_st <- as.matrix(se_exp_st)
@@ -55,8 +126,8 @@ findModes <- function(b_exp, b_out,
 		cor.mat <- diag(rep(1, ncol(b_exp) + 1))
 	rho <- switch(loss.function,
 				  l2 = function(r, ...) rho.l2(r, ...),
-				  huber = function(r, ...) rho.huber(r, k, ...),
-				  tukey = function(r, ...) rho.tukey(r, k, ...))
+				  huber = function(r, ...) rho.huber(r, k.findmodes, ...),
+				  tukey = function(r, ...) rho.tukey(r, k.findmodes, ...))
 
 	delta <- integrate(function(x)  rho(x) * dnorm(x), -Inf, Inf)$value
 
@@ -67,29 +138,26 @@ findModes <- function(b_exp, b_out,
 
 
   ## First, calculate t for each SNP
-	t_fun <- function(beta, tau2) {
+	t_fun <- function(beta, tau2 = 0) {
 		upper <- b_out - b_exp %*% beta
 		temp <- t(t(cbind(se_exp, se_out)) * c(-beta, 1))
 		lower <- sqrt(rowSums((temp %*% cor.mat) * temp) + tau2)
 		return(upper/lower)
 	}
 
-	if (is.null(marker.data)) 
-		marker.data <- list(b_exp = b_exp,
-							se_sep = se_exp,
-							b_out = b_out,
-							b_se = b_se)
 
-	t_fun_marker <- function(beta, tau2) {
-			upper <-marker.data$b_out - marker.data$b_exp %*% beta
-			temp <- t(t(cbind(marker.data$se_exp, marker.data$se_out)) * c(-beta, 1))
+	t_fun_marker <- function(beta, tau2 = 0) {
+			upper <-marker.data$b_out - as.matrix(marker.data$b_exp) %*% beta
+			temp <- t(t(cbind(as.matrix(marker.data$se_exp), 
+							  marker.data$se_out)) * c(-beta, 1))
 			lower <- sqrt(rowSums((temp %*% cor.mat) * temp) + tau2)
+		#	print(head(as.vector(upper/lower)))
 			return(upper/lower)
 		}
 
 
 
-	robust.optfun.fixtau <- function(beta, tau2) {
+	robust.optfun.fixtau <- function(beta, tau2 = 0) {
 		-sum(rho(t_fun(beta, tau2)))
 	}
 
@@ -106,12 +174,14 @@ findModes <- function(b_exp, b_out,
 	if (is.null(beta.mode))
 		beta.mode <- beta.seq[mode.pos]
 
-	res.mat <- sapply(beta.mode, function(beta) t_fun_marker(beta,0))
+	res.mat <- sapply(beta.mode, function(beta) tt <- t_fun_marker(beta,0))
+
 	if (length(beta.mode) == 1)
 		res.mat <- as.matrix(res.mat)
+
 	colnames(res.mat) <- beta.mode
 
-	rownames(res.mat) <- rownames(b_exp_st)
+	rownames(res.mat) <- rownames(marker.data$b_exp)
 
 	ss <- which(rowSums(abs(res.mat) < exclude.thres) == 1 & 
 				rowSums(abs(res.mat) < include.thres) > 0)
@@ -161,8 +231,8 @@ findModes <- function(b_exp, b_out,
 
 	
 
-		p <- p +  xlim(max(mode.lmts[1], min(beta.mode) - 3 * tmp.range), 
-					   min(mode.lmts[2], max(beta.mode) + 3 * tmp.range)) 
+		p <- p +  xlim(max(mode.lmts[1], min(beta.mode) -  2 * tmp.range), 
+					   min(mode.lmts[2], max(beta.mode) + 2 * tmp.range)) 
 
 
 		snp_ids <- rownames(markers)
@@ -218,8 +288,8 @@ findModes <- function(b_exp, b_out,
 
  
   if (sum(keep.mode) > 1) {
-	  names(b_out_st) <- rownames(b_exp_st)
-	  marker.ratio <- b_out_st[markers$rsID] / b_exp_st[markers$rsID, 1]
+	  names(marker.data$b_out) <- rownames(marker.data$b_exp)
+	  marker.ratio <- marker.data$b_out[markers$rsID] / marker.data$b_exp[markers$rsID, 1]
 	  marker.mode <- as.matrix(markers[, 6:(5 + sum(keep.mode)), drop = F]) %*% 
 		  as.matrix(beta.mode[keep.mode])
   	  markers <- cbind(markers[, 1:4], marker.est = marker.ratio,

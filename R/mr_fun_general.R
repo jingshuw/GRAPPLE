@@ -2,12 +2,13 @@
 #'
 #' The main function of GRAPPLE to estimate causal effects of risk factors \code{beta} under a random effect model of the pleiotropic effects.
 #'
-#' @param b_exp A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors. SNPs should be provided after clumping. 
-#' @param b_out A vector of length \code{p} for the effect sizes of the selected \code{p} SNPs on the disease (outcome)
-#' @param se_exp A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp} 
-#' @param se_out A vector of length \code{p} for the standard deviations of each element in \code{b_out}
+#' @param input.list The output of the GRAPPLE function \code{getInput}. If provided, then \code{b_exp}, \code{b_out}, \code{se_exp}, \code{se_out} and \code{sel.pvals} will all be extracted from it. An alternative is to set input.list as NULL and provide other other arguments explicitly. Default is NULL.
+#' @param b_exp A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors. SNPs should be provided after clumping. Used only when \code{input.list} is NULL. 
+#' @param b_out A vector of length \code{p} for the effect sizes of the selected \code{p} SNPs on the disease (outcome). Used only when \code{input.list} is NULL. 
+#' @param se_exp A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp}. Used only when \code{input.list} is NULL. 
+#' @param se_out A vector of length \code{p} for the standard deviations of each element in \code{b_out}. Used only when \code{input.list} is NULL. 
 #' @param p.thres P-value threshold for SNP selection. Default is NULL, which is using all data provided. If not NULL, \code{sel.pvals} need to be provided. If \code{p.thres} is a scalar, then SNPs with \code{sel.pvals} less than \code{p.thres} are selected. If \code{p.thres} has two elements, then the first element is used as the lower bound and the second used as the upper bound. 
-#' @param sel.pvals A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Must be provided if \code{p.thres} is not NULL. 
+#' @param sel.pvals A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Used when \code{p.thres} is not NULL, while \code{input.list} is NULL. 
 #' @param tau2 The dispersion parameter. The default value is NULL, which is to be determined automatically 
 #' @param cor.mat Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Default is NULL, for the identity matrix
 #' @param loss.function Loss function used, one of "tukey", "huber" or "l2". Default is "tukey", which is robust to outlier SNPs with large pleiotropic effects
@@ -27,8 +28,9 @@
 #'
 #' @import nortest
 #' @export
-grappleRobustEst <- function(b_exp, b_out, 
-                             se_exp, se_out,
+grappleRobustEst <- function(input.list = NULL,
+							 b_exp = NULL, b_out = NULL, 
+                             se_exp = NULL, se_out = NULL,
 							 p.thres = NULL,
 							 sel.pvals = NULL,
                              tau2 = NULL,
@@ -41,6 +43,18 @@ grappleRobustEst <- function(b_exp, b_out,
                              tol = .Machine$double.eps^0.5,
                              opt.method = "L-BFGS-B",
                              diagnosis = FALSE) {
+
+	if (!is.null(input.list)) {
+		b_exp <- input.list$b_exp
+		b_out <- input.list$b_out
+		se_exp <- input.list$se_exp
+		se_out <- input.list$se_out
+		sel.pvals <- input.list$sel.pvals
+	} else {
+		if (is.null(b_exp) || is.null(b_out) || is.null(se_exp) || is.null(se_out))
+			stop("Require providing either the input.list or all values of b_exp, b_out,
+				 se_exp and se_out")
+	}
 
 	b_exp <- as.matrix(b_exp)
 	se_exp <- as.matrix(se_exp)
@@ -249,10 +263,10 @@ grappleRobustEst <- function(b_exp, b_out,
   #  }
 
  
-    if (is.null(tau2) && (tau2.hat <= min(se_out^2) / 5)) {
-        warning("The estimated overdispersion parameter is very small. 
-                Consider using the simple model without overdispersion.")
-    }
+  #  if (is.null(tau2) && (tau2.hat <= min(se_out^2) / 5)) {
+  #      warning("The estimated overdispersion parameter is very small. 
+  #              Consider using the simple model without overdispersion.")
+  #  }
 
     ### calculating asymptotic variance
     ## calculate the derivatives of t_fun at beta.hat, tau2.hat

@@ -17,9 +17,9 @@ getInput(sel.files, exp.files, out.file, plink_exe, plink_refdat,
 
 \item{out.file}{The GWAS summary statistics file name for the outcome data. Each GWAS file should have a column "SNP" for the SNP ids, "beta" for the effect sizes, "se" for the standard deviation, "effect_allele" for the effect allele of the SNP (capitalized letters) and "other_allele" for the other allele of the SNP (capitalized letters).}
 
-\item{plink_exe}{The excutable file of PLINK}
+\item{plink_exe}{The executable file of PLINK. PLINK should be first downloaded from \url{https://www.cog-genomics.org/plink2}.}
 
-\item{plink_refdat}{The reference files (.bed, .bim, .fam) for PLINK}
+\item{plink_refdat}{The reference genotype files (.bed, .bim, .fam) for clumping using PLINK (loaded with --bfile).}
 
 \item{max.p.thres}{The upper threshold of the selection p-values for a SNP to be selected before clumping. It only requires that at least one of the p-values of the risk factors of the SNPs to be below the threshold. Default is \code{0.01}.}
 
