@@ -47,6 +47,8 @@ plink_clump <- function(dat,
 
     a <- a[, -(2:3)]
 
+	unlink(tempdir, recursive = T)
+
     return(a)
 }
 
