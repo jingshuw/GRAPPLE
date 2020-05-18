@@ -4,7 +4,7 @@
 #' This function has GWAS summary statistics data files as inputs, perform genetic instrument selection and return matrices that are ready to use for GRAPPLE
 #'
 #'
-#' @param sel.files A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors SNP selection. Each GWAS file is an ".rda", ".rData", ".csv" or ".txt" file containing an R object of name "dat". The "dat" object is a data frame that at least has a column "SNP" for the SNP ids, "pval" for the p-values. 
+#' @param sel.files A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors SNP selection. Each GWAS file is a ".csv" or ".txt" file containing a data frame that at least has a column "SNP" for the SNP ids, "pval" for the p-values. 
 #' @param exp.files A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors for getting the effect sizes and standard deviations. Each GWAS file should have a column "SNP" for the SNP ids, "beta" for the effect sizes, "se" for the standard deviation, "effect_allele" for the effect allele of the SNP (capitalized letters) and "other_allele" for the other allele of the SNP (capitalized letters). 
 #' @param out.file The GWAS summary statistics file name for the outcome data. Each GWAS file should have a column "SNP" for the SNP ids, "beta" for the effect sizes, "se" for the standard deviation, "effect_allele" for the effect allele of the SNP (capitalized letters) and "other_allele" for the other allele of the SNP (capitalized letters).
 #' @param plink_exe The executable file of PLINK. PLINK should be first downloaded from \url{https://www.cog-genomics.org/plink2}. 
