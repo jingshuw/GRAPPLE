@@ -1,7 +1,7 @@
 # grapple
 
 
-This is the R package of GRAPPLE (Genome-wide  mR  Analysis  under  Pervasive  PLEiotropy), a comprehensive framework for Mendelian Randomization.
+This is the R package of GRAPPLE (Genome-wide  mR  Analysis  under  Pervasive  PLEiotropy), a comprehensive framework for Mendelian Randomization. For details of the GRAPPLE framework, please refer to our [manuscript]{https://www.biorxiv.org/content/10.1101/2020.05.06.077982v1}.
 
 ## Installation
 The grapple package can be installed from Github
