@@ -8,14 +8,14 @@ For details of the GRAPPLE framework, please refer to our [manuscript](https://w
 
 
 ## Installation
-The grapple package can be installed from Github
+The GRAPPLE package can be installed in R from this Github repository:
 
 ```
 library(devtools)
 install_github("jingshuw/grapple")
 ```
 
-One may also need to install [PLINK](https://www.cog-genomics.org/plink/) for LD clumping, and prepared a suitable LD clumping reference dataset for PLINK. One resource of the reference dataset of European population that is used in the GRAPPLE paper is the 1000 genome European reference panel which can be downloaded here http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz, from the [MRCIEU cite](https://github.com/MRCIEU/gwas2vcf).
+One may also need to install [PLINK](https://www.cog-genomics.org/plink/) for LD clumping, and prepared a suitable LD clumping reference dataset for PLINK, if he/she requires GRAPPLE to perform SNP selection. One resource of the reference dataset of the European population for clumping, which is also used in the GRAPPLE paper, is the 1000 genome European reference panel downloaded here http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz, from the [MRCIEU cite](https://github.com/MRCIEU/gwas2vcf).
 
 ## Basic Usage
 
