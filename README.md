@@ -15,16 +15,26 @@ library(devtools)
 install_github("jingshuw/grapple")
 ```
 
-One may also need to install [PLINK](https://www.cog-genomics.org/plink/) for LD clumping, and prepared a suitable LD clumping reference dataset for PLINK, if he/she requires GRAPPLE to perform SNP selection. One resource of the reference dataset of the European population for clumping, which is also used in the GRAPPLE paper, is the 1000 genome European reference panel downloaded here http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz, from the [MRCIEU cite](https://github.com/MRCIEU/gwas2vcf).
+One may also need to install [PLINK](https://www.cog-genomics.org/plink/) for LD clumping, and prepare a suitable LD clumping reference dataset for PLINK, if he/she requires GRAPPLE to perform data preprocessing. One resource of the reference dataset of the European population for clumping, which is also used in the GRAPPLE paper, is the 1000 genome European reference panel downloaded here http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz, from the [MRCIEU cite](https://github.com/MRCIEU/gwas2vcf).
 
-## Basic Usage
+## Input Datasets
 
 
 The analysis with GRAPPLE starts with preprocessing the raw GWAS summary statistics, which includes selection of genetic instruments, harmonizing the datasets to share the same effect and reference allele, calculating a correlation matrix of the noise in estimated marginal associations which is shared among SNPs, and selecting a list of candidate SNPs for mode marker detection.
 
-In order to do this, GRAPPLE needs a few GWAS summary statistics files: one file for the disease (outcome file), and two files for each risk factor, where one is for SNP selection (selection file) and the other is for estimating the marginal effects of the SNPs on this risk factor (exposure file). We allow overlapping individuals for the GWAS data in the outcome and exposure files, which there should be as few overlapping individuals as possible between the selection files an other files to avoid SNP selection bias. Each GWAS file is a ".csv" or ".txt" file containing a data frame of at least 6 columns with these column names: 'SNP, effect allele, other allele, beta, se, pval. The SNP column contains rsID for each SNP. Both the effect allele and other allele column need to have capital letters. The beta column contains the estimated effect size for continuous trait and log odds ratio for binary trait, and the se column is the standard deviation of the corresponding 'beta'. 
+In order to do this, GRAPPLE needs a list of raw GWAS summary statistics files. Each GWAS file is a ".csv" or ".txt" file containing a data frame of at least 6 columns with these column names: 'SNP, effect allele, other allele, beta, se, pval. The SNP column contains rsID for each SNP. Both the effect allele and other allele column need to have capital letters. The beta column contains the estimated effect size for continuous trait and log odds ratio for binary trait, and the se column is the standard deviation of the corresponding 'beta'. 
 
-As an example, you may download some [sample datasets](https://www.dropbox.com/sh/vv6pz09cknyz9ca/AAAV_WWLsJmI2LZwL1da45q0a?dl=0), download PLINK and save the executable file as "./plink", and download the reference panel and unzip the ".tgz" file in the current folder.
+All GWAS summary statistics files in the above format that are used in the GRAPPLE paper can be download from [datasets](https://www.dropbox.com/sh/vv6pz09cknyz9ca/AAAV_WWLsJmI2LZwL1da45q0a?dl=0).
+
+
+## Data Preprocessing
+
+  Deta preprocessing of GRAPPLE needs one file for the disease (outcome file), and two files for each risk factor, where one is for SNP selection (selection file) and the other is for estimating the marginal effects of the SNPs on this risk factor (exposure file). We allow overlapping individuals for the GWAS data in the outcome and exposure files, which there should be as few overlapping individuals as possible between the selection files an other files to avoid SNP selection bias. 
+
+
+
+ As an example, one can download PLINK and save the executable file as "./plink", and also download the reference panel and unzip the ".tgz" file in the current folder.
+
 
 ```
 library(grapple)
@@ -35,6 +45,8 @@ plink.exe <- "./plink"
 plink_refdat <- "./data_maf0.01_rs_ref/data_maf0.01_rs_ref"
 data <- getInput(sel.file, exp.file, out.file, plink.exe, plink_refdat)
 ```
+
+## Basic Usage
 
 If the number of risk factors is 1, GRAPPLE can detect the number of pleiotropic pathways by finding the number of modes in the robustified profile likelihood, given a p-value selection threshold.
 ```
