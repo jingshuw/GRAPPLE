@@ -24,7 +24,7 @@ The analysis with GRAPPLE starts with preprocessing the raw GWAS summary statist
 
 In order to do this, GRAPPLE needs a list of raw GWAS summary statistics files. Each GWAS file is a ".csv" or ".txt" file containing a data frame of at least 6 columns with these column names: 'SNP, effect allele, other allele, beta, se, pval. The SNP column contains rsID for each SNP. Both the effect allele and other allele column need to have capital letters. The beta column contains the estimated effect size for continuous trait and log odds ratio for binary trait, and the se column is the standard deviation of the corresponding 'beta'. 
 
-All GWAS summary statistics files in the above format that are used in the GRAPPLE paper can be download from [datasets](https://www.dropbox.com/sh/vv6pz09cknyz9ca/AAAV_WWLsJmI2LZwL1da45q0a?dl=0).
+All GWAS summary statistics files in the above format that are used in the GRAPPLE paper can be download from [datasets](https://www.dropbox.com/sh/vv6pz09cknyz9ca/AAAV_WWLsJmI2LZwL1da45q0a?dl=0). For the original publicly available source of each file, please refer to Table S1 and S2 of our [manuscript](https://www.biorxiv.org/content/10.1101/2020.05.06.077982v1).                             
 
 
 ## Data Preprocessing
