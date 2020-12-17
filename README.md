@@ -33,29 +33,77 @@ All GWAS summary statistics files in the above format that are used in the GRAPP
 
 
 
- As an example, one can download PLINK and save the executable file as "./plink", and also download the reference panel and unzip the ".tgz" file in the current folder.
+ As an example, one can download the summary statistics files for BMI and T2D from [datasets](https://www.dropbox.com/sh/vv6pz09cknyz9ca/AAAV_WWLsJmI2LZwL1da45q0a?dl=0), and 
+ also download the reference panel and unzip the ".tgz" file in the current folder. 
+ Then, we can start by selecting SNPs from these files as genetic instruments.
 
 
 ```
-library(grapple)
-sel.file <- "bmi_ukbb_full.csv"
-exp.file <- "bmi_giant_full.csv"
-out.file <- "t2d_morris2012_impute.csv"
-plink.exe <- "./plink"
+library(GRAPPLE)
+sel.file <- "BMI-ukb.csv"
+exp.file <- "BMI-giant17eu.csv"
+out.file <- "T2D-diagram12-M.csv"
 plink_refdat <- "./data_maf0.01_rs_ref/data_maf0.01_rs_ref"
-data <- getInput(sel.file, exp.file, out.file, plink.exe, plink_refdat)
 ```
+
+Extracting the independent SNPs can take a few minutes depending on the size of the GWAS summary statistics files.
+
+```
+data.list <- getInput(sel.file, exp.file, out.file, plink_refdat, max.p.thres = 0.01)
+```
+
+This function extracts all independent SNPs whose selection p-values do not exceed 0.01. It returns three elements. One is 'data' which is a data frame of the summary statistics of the selected SNPs, the other is 'marker.data' which is a data frame for all candidate marker SNPs. The difference between 'data' and 'marker.data' is that we use a more stringent r2 (0.001) in LD clumping for the selection of genetic instruments to guarantee independence than in selecting candidate marker SNPs (r2 = 0.05). The third element is the estimated correlation matrix for the GWAS cohorts. 
+
 
 ## Basic Usage
 
-If the number of risk factors is 1, GRAPPLE can detect the number of pleiotropic pathways by finding the number of modes in the robustified profile likelihood, given a p-value selection threshold.
+If the number of risk factors is 1, GRAPPLE can detect the number of pleiotropic pathways by finding the number of modes in the robustified profile likelihood, given a p-value selection threshold. 
+
+### Estimation when no pleiotropic pathways are detected
+
+We can try the above example. 
 ```
-diagnosis <- findModes(data, p.thres = 1e-4)
+## Here we take the p-value threshold be 1e-4, but one can try a series of p-values and see if the result is consistent
+diagnosis <- findModes(data.list$data, p.thres = 1e-4)
+
 diagnosis$modes
 diagnosis$p
 ```
+There is only one mode in the likelihood, so we do not find any evidence of multiple pleiotropic pathways. It gives us some 
+guarantee to use MR-RAPs to estimate the causal effect of the risk factor. 
+```
+result <- grappleRobustEst(data.list$data, p.thres = 1e-4)
+```
+This function returns our estimate results.
 
-If there are multiple modes, then we can check which SNP markers contribute to the mode. To correct for multiple pleiotropic pathways, one can either remove outliers or add more risk factors. GRAPPLE can also estimate the causal effect of the risk factors assuming a random effect model on SNPs' pleiotropic effects.
+### Estimation when multiple pleiotropic pathways are detected
+
+Here is another example where we can detect multiple modes
+
 ```
-result <- grappleRobustEst(data, p.thres = 1e-4)
+library(GRAPPLE)
+sel.file <- "CRP-Prins17.csv"
+exp.file <- "CRP-Dehghan11.csv"
+out.file <- "CAD-Nelson17.csv"
+data.list <- getInput(sel.file, exp.file, out.file, plink_refdat, max.p.thres = 0.01)
+diagnosis <- findModes(data.list$data, p.thres = 1e-4, marker.data = data.list$marker.data)
+diagnosis$p
 ```
+
+We find three modes in the profile likelihood. Checking the marker SNPs, marker genes and mapped GWAS trait, we can find that 
+LDL-C can be a confounding trait. We can then run GRAPPLE adjusting for the LDL-C effects
+
+
+```
+library(GRAPPLE)
+sel.file <-c(sel.file, "LDL-gera18.csv")
+exp.file <- c(exp.file, "LDL-glgc13.csv")
+out.file <- "CAD-Nelson17.csv"
+data.list <- getInput(sel.file, exp.file, out.file, plink_refdat, max.p.thres = 0.01)
+result <- grappleRobustEst(data.list$data, p.thres = 1e-4)
+```
+
+After adjusting for LDL-C, we can not find any evidence that there is a causal effect of CRP on CAD.
+
+
+

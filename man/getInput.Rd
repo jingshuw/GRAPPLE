@@ -4,20 +4,18 @@
 \alias{getInput}
 \title{Preprocess GWAS summary statistics datasets}
 \usage{
-getInput(sel.files, exp.files, out.file, plink_exe, plink_refdat,
+getInput(sel.files, exp.files, out.files, plink_refdat,
   max.p.thres = 0.01, cal.cor = T, p.thres.cor = 0.5,
-  get.marker.candidates = T, sample.split.marker.candidates = F,
-  marker.p.thres = 1e-05, clump_r2 = 0.001,
+  get.marker.candidates = T, marker.p.thres = 1e-05,
+  marker.p.source = "exposure", clump_r2 = 0.001,
   clump_r2_formarkers = 0.05)
 }
 \arguments{
-\item{sel.files}{A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors SNP selection. Each GWAS file is a ".csv" or ".txt" file containing a data frame that at least has a column "SNP" for the SNP ids, "pval" for the p-values.}
+\item{sel.files}{A vector of the GWAS summary statistics file names for the risk factors SNP selection. Each GWAS file is a ".csv" or ".txt" file containing a data frame that at least has a column "SNP" for the SNP ids and "pval" for the p-values. The length of \code{sel.files} are not required to be the same as that of \code{exp.files} and the order of the files do not matter, while we strongly suggest having one selection file for each risk factor.}
 
-\item{exp.files}{A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors for getting the effect sizes and standard deviations. Each GWAS file should have a column "SNP" for the SNP ids, "beta" for the effect sizes, "se" for the standard deviation, "effect_allele" for the effect allele of the SNP (capitalized letters) and "other_allele" for the other allele of the SNP (capitalized letters).}
+\item{exp.files}{A vector of length \code{k} of the GWAS summary statistics file names of the \code{k} risk factors for getting the effect sizes and standard deviations. Each GWAS file should have a column "SNP" for the SNP ids, "beta" for the effect sizes, "se" for the standard deviation, "effect_allele" for the effect allele and "other_allele" for the other allele of the SNP.}
 
-\item{out.file}{The GWAS summary statistics file name for the outcome data. Each GWAS file should have a column "SNP" for the SNP ids, "beta" for the effect sizes, "se" for the standard deviation, "effect_allele" for the effect allele of the SNP (capitalized letters) and "other_allele" for the other allele of the SNP (capitalized letters).}
-
-\item{plink_exe}{The executable file of PLINK. PLINK should be first downloaded from \url{https://www.cog-genomics.org/plink2}.}
+\item{out.files}{The GWAS summary statistics file name for the disease data, can be a vector of length \code{m} to allow preprocessing \code{m} diseases simultaneously. Each GWAS file should have a column "SNP" for the SNP ids, "beta" for the effect sizes, "se" for the standard deviation, "effect_allele" for the effect allele and "other_allele" for the other allele of the SNP.}
 
 \item{plink_refdat}{The reference genotype files (.bed, .bim, .fam) for clumping using PLINK (loaded with --bfile).}
 
@@ -25,26 +23,27 @@ getInput(sel.files, exp.files, out.file, plink_exe, plink_refdat,
 
 \item{cal.cor}{Whether calculate the \code{(k + 1)} by \code{(k + 1)} correlation matrix between the \code{k} risk factors and the outcome. The default is TRUE}
 
-\item{p.thres.cor}{The lower threshold of the p-values for a SNP to be used in calculating the correlation matrix}
+\item{p.thres.cor}{The lower threshold of the p-values for a SNP to be used in calculating the correlation matrix. It only select SNPs whose p-values are above the threshold for all risk factors. Default is \code{0.5}.}
 
 \item{get.marker.candidates}{Whether getting SNPs which are used for mode marker selection. Only applies to cases where the number of risk factors \code{k = 1}. Default is TRUE for \code{k = 1}.}
 
-\item{marker.p.thres}{Selection threshold of p-values for mode markers. Default is \code{1e-5}.}
+\item{marker.p.thres}{P-value threshold of p-values in the exposure files for mode markers. Default is \code{1e-5}.}
+
+\item{marker.p.source}{source of p-values of mode markers, a string of either "exposure" or "selection". Default is "exposure" for obtaining more markers.}
 
 \item{clump_r2}{The clumping r2 threshold in PLINK for genetic instrument selection. Default is set to 0.001 for selection of independent SNPs.}
 
 \item{clump_r2_formarkers}{The clumping r2 threshold in PLINK. Default is set to 0.05 for selection of candidates for the marker SNPs.}
 }
 \value{
-A list of selected summary statistics, which includes
-\item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors (exposures)}
-\item{se_exp}{A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp}}
-\item{b_out}{A vector of size \code{p} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on the disease (outcome)}
-\item{se_out}{A vector of size \code{p} for the standard deviations of each entry in \code{b_out}} 
-\item{meta_data}{A data frame for the information of selected SNPs containing 3 columns, the SNP rsID, the effect allele and other allele after harmonizing (where the \code{b_exp} and \code{b_out} are the effects of the effect_alleles).}
-\item{sel.pvals}{A vector of size \code{p} for p-values of selected SNPs obtained from the selection files. When there are \code{k > 1} selection files, each p-value is the Bonferronni combination of \code{k} p-values.}
-\item{marker.data}{A list of data for marker candidate SNPs, whose elements are \code{b_exp}, \code{se_exp}, \code{b_out}, \code{se_out}, \code{meta_data} and \code{sel.pvals}.}
-\item{cor.mat}{The estimated \code{(k + 1)} by \code{(k + 1)} correlation matrix between the \code{k} risk factors and the disease (outcome) shared by SNPs. The last column is for the outcome trait.}
+A list of selected summary statistics, which include
+\item{data}{A data frame of size \code{p * (3 + 2k + 2m + 1)} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors (exposures). 
+The first three columns include the SNP rsID, the effect allele and other allele after harmonizing, 
+the next \code{2k} columns are the estimated effect sizes and standard deviations for the \code{k} risk factors stored in \code{exp.files}, 
+the next \code{2m} columns are the estimated effect sizes and standard deviations for the \code{m} diseases stored in \code{exp.files}
+and the the last columns are the selection p-values obtained from \code{sel.files}}
+\item{marker.data}{A data frame for marker candidate SNPs, which has the same columns as \code{data}}. 
+\item{cor.mat}{The estimated \code{(k + m)} by \code{(k + m)} correlation matrix between the \code{k} risk factors and the disease (outcome) shared by SNPs. The last column is for the outcome trait.}
 }
 \description{
 This function has GWAS summary statistics data files as inputs, perform genetic instrument selection and return matrices that are ready to use for GRAPPLE

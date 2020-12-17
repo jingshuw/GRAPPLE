@@ -2,21 +2,25 @@
 #'
 #' The main function of GRAPPLE to estimate causal effects of risk factors \code{beta} under a random effect model of the pleiotropic effects.
 #'
-#' @param input.list The output of the GRAPPLE function \code{getInput}. If provided, then \code{b_exp}, \code{b_out}, \code{se_exp}, \code{se_out} and \code{sel.pvals} will all be extracted from it. An alternative is to set input.list as NULL and provide other other arguments explicitly. Default is NULL.
-#' @param b_exp A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors. SNPs should be provided after clumping. Used only when \code{input.list} is NULL. 
-#' @param b_out A vector of length \code{p} for the effect sizes of the selected \code{p} SNPs on the disease (outcome). Used only when \code{input.list} is NULL. 
-#' @param se_exp A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp}. Used only when \code{input.list} is NULL. 
-#' @param se_out A vector of length \code{p} for the standard deviations of each element in \code{b_out}. Used only when \code{input.list} is NULL. 
-#' @param p.thres P-value threshold for SNP selection. Default is NULL, which is using all data provided. If not NULL, \code{sel.pvals} need to be provided. If \code{p.thres} is a scalar, then SNPs with \code{sel.pvals} less than \code{p.thres} are selected. If \code{p.thres} has two elements, then the first element is used as the lower bound and the second used as the upper bound. 
-#' @param sel.pvals A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Used only when \code{p.thres} is not NULL, while \code{input.list} is NULL. 
-#' @param tau2 The dispersion parameter. The default value is NULL, which is to be determined automatically 
+#' @param data A data frame containing the information of the selected genetic instruments. 
+#' One can simply take the \code{data} element from the output of function \code{getInput}, or provide their own data frame.
+#' The required columns include \code{SNP} for the SNP rsID, the columns \code{gamma_exp1} to \code{gamma_expk} for the 
+#' estimated effect sizes of the SNPs on risk factors \code{1} to \code{k}, the columns \code{se_exp1} to \code{se_expk} for their
+#' standard deviations, the columns \code{gamma_out1} to \code{gamma_outm} for the 
+#' estimated effect sizes of the SNPs on diseases \code{1} to \code{m},the columns \code{se_out1} to \code{se_outm} for their 
+#' standard deviations.
+#' @param p.thres The p-value threshold for SNP selection. The SNPs whose \code{selection_pvals} are less than \code{p.thres} are selected. 
+#' The default value is NULL, which is to include all SNPs in \code{data}. If it is not NULL, then \code{data} should have a column \code{selection_pvals}
+#' that stores the selection p-value of each SNP.
 #' @param cor.mat Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Used only when \code{input.list} is NULL and the default value is NULL, for the identity matrix.
+#' @param tau2 The dispersion parameter. The default value is NULL, which is to be estimated by the function
 #' @param loss.function Loss function used, one of "tukey", "huber" or "l2". Default is "tukey", which is robust to outlier SNPs with large pleiotropic effects
 #' @param k Tuning parameters of the loss function, for loss "l2", it is NA, for loss "huber", default is 1.345 and for loss "tukey", default is 4.685
 #' @param niter Number of maximum iterations allowed for optimization. Default is 20
 #' @param tol Tolerance for convergence, default is the square root of the smallest positive floating number depending on the machine R is running on
 #' @param opt.method the optimization used, which is one of choices the R function \code{optim} accepts. Default value is "L-BFGS-B".
 #' @param diagnosis Run diagnosis analysis based on the residuals or not, default is FALSE
+#' @param plot.it Whether show the QQ-plot or not if diagnosis if performed. Default is TRUE.
 #'
 #' @return A list with elements
 #' \item{beta.hat}{Point estimates of \code{beta}}
@@ -27,14 +31,12 @@
 #' \item{std.resid}{Returned if \code{diagnosis} is TRUE. A vector of standardized residuals of each SNP}
 #'
 #' @import nortest
+#' @import ggplot2
 #' @export
-grappleRobustEst <- function(input.list = NULL,
-							 b_exp = NULL, b_out = NULL, 
-                             se_exp = NULL, se_out = NULL,
-							 p.thres = NULL,
-							 sel.pvals = NULL,
-                             tau2 = NULL,
+grappleRobustEst <- function(data,
+							               p.thres = NULL,
                              cor.mat = NULL, 
+							               tau2 = NULL,
                              loss.function = c("tukey", "huber", "l2"), 
                              k = switch(loss.function[1], 
                                         l2 = NA, huber = 1.345, 
@@ -42,45 +44,21 @@ grappleRobustEst <- function(input.list = NULL,
                              niter = 20, 
                              tol = .Machine$double.eps^0.5,
                              opt.method = "L-BFGS-B",
-                             diagnosis = FALSE) {
+                             diagnosis = T, plot.it = T) {
 
-	if (!is.null(input.list)) {
-		b_exp <- input.list$b_exp
-		b_out <- input.list$b_out
-		se_exp <- input.list$se_exp
-		se_out <- input.list$se_out
-		sel.pvals <- input.list$sel.pvals
-		cor.mat <- input.list$cor.mat
-	} else {
-		if (is.null(b_exp) || is.null(b_out) || is.null(se_exp) || is.null(se_out))
-			stop("Require providing either the input.list or all values of b_exp, b_out,
-				 se_exp and se_out")
-	}
-
-	b_exp <- as.matrix(b_exp)
-	se_exp <- as.matrix(se_exp)
-	b_out <- as.vector(b_out)
-	se_out <- as.vector(se_out)
-
-
+  nn <- colnames(data)
 	if (!is.null(p.thres)) {
-		if (is.null(sel.pvals))
-			stop("Please provide the list of p-values for selection")
-		else {
-			if (length(p.thres == 1))
-				idx <- which(sel.pvals < p.thres)
-			else if (length(p.thres) == 2)
-				idx <- which(sel.pvals >= p.thres[1] & sel.pvals < p.thres[2])
-			if (length(p.thres) > 2 || length(idx) == 0)
-				stop("Please provide valid p-value thresholds")
-		}
-	} else
-		idx <- 1:nrow(b_exp)
+	  if (length(grep("selection_pvals", nn)) == 0)
+	    stop("data need to include a column named selection_pvals for the selection p-value of each SNP.")
+	}
+		data <- data[data$selection_pvals < p.thres, ]
 
-	b_exp <- b_exp[idx, , drop = F]
-	se_exp <- se_exp[idx, , drop = F]
-	b_out <- b_out[idx]
-	se_out <- se_out[idx]
+
+	
+	b_exp <- as.matrix(data[, grep("gamma_exp", nn), drop = F])
+	se_exp <-  as.matrix(data[, grep("se_exp", nn), drop = F])
+	b_out <-  data[, grep("gamma_out", nn)[1]]
+	se_out <-  data[, grep("se_out", nn)[1]]
 
  
     loss.function <- match.arg(loss.function, c("tukey", "huber", "l2"))
@@ -91,20 +69,16 @@ grappleRobustEst <- function(input.list = NULL,
                   huber = function(r, ...) rho.huber(r, k, ...),
                   tukey = function(r, ...) rho.tukey(r, k, ...))
 
-#    delta <- integrate(function(x) x * rho(x, deriv = 1) * dnorm(x), -Inf, Inf)$value
     delta <- integrate(function(x)  rho(x) * dnorm(x), -Inf, Inf)$value
 
     c1 <- integrate(function(x) rho(x, deriv = 1)^2 * dnorm(x), -Inf, Inf)$value
- #   c2 <- integrate(function(x) x^2 * rho(x, deriv = 1)^2 * dnorm(x), -Inf, Inf)$value - delta^2
     c2 <- integrate(function(x) rho(x)^2 * dnorm(x), -Inf, Inf)$value - delta^2
     c4 <- integrate(function(x) rho(x, deriv = 1) * x * dnorm(x), -Inf, Inf)$value
- #   c3 <- integrate(function(x) (rho(x, deriv = 2) * x^2 + rho(x, deriv = 1) * x)* dnorm(x), -Inf, Inf)$value
     c3 <- c4
 
 
     ## First, calculate t for each SNP
     t_fun <- function(beta, tau2) {
-  #    print(tau2)
       upper <- b_out - b_exp %*% beta
       temp <- t(t(cbind(se_exp, se_out)) * c(-beta, 1))
       lower <- sqrt(rowSums((temp %*% cor.mat) * temp) + tau2)
@@ -120,10 +94,7 @@ grappleRobustEst <- function(input.list = NULL,
     robust.E <- function(beta, tau2) {
       return(sum(rho(t_fun(beta, tau2))) - (length(b_out) - 1) * delta)
      }
- #   robust.E <- function(beta, tau2) {
- #     tt <- t_fun(beta, tau2)
- #     return(sum(rho(tt, deriv = 1) * tt) - length(b_out) * delta)
- #    }
+
 
 
     ## Initialize
@@ -133,7 +104,6 @@ grappleRobustEst <- function(input.list = NULL,
       tau2.hat <- tau2
     bound.beta <- apply(abs(b_out / b_exp), 2, function(v)quantile(v[is.finite(v)], 
 																   probs = 0.95, na.rm = T)) * 2
-   # bound.tau2 <- quantile(se_out^2, 0.95, na.rm = T) * 2
     bound.tau2 <- median(b_out^2) * 2
     if (ncol(b_exp) == 1) {
       beta.seq <- seq(-bound.beta, bound.beta, length.out = 5000)
@@ -149,12 +119,8 @@ grappleRobustEst <- function(input.list = NULL,
       for (i in 1:length(beta.hat)) {
         beta.seq <- seq(-bound.beta[i], bound.beta[i], length.out = 5000)
         beta.hat[i] <- beta.seq[which.max(sapply(beta.seq, temp.fun, idx = i))]
-      #  beta.hat[i] <- optimize(function(bb) temp.fun(bb, i), 
-      #                          bound.beta[i] * c(-1, 1), maximum = TRUE,
-      #                          tol = .Machine$double.eps^0.5)$maximum 
       }
     }
- #   beta.hat <- beta.hat + rnorm(length(beta.hat), bound.beta * 0.05)
 
     for (iter in 1:niter) {
 #		print(iter)
@@ -170,16 +136,11 @@ grappleRobustEst <- function(input.list = NULL,
                                        bound.tau2 * c(0, 1), 
 									   extendInt = "downX", 
                                        tol = .Machine$double.eps^0.25)$root, 
-                                    #   tol = bound.tau2 * .Machine$double.eps^0.25)$root, 
                                error = function(e) {warning("Did not find a solution for tau2."); 0})
 		}
       }
 
-   #     if (tau2.hat < 0) {
-   #         tau2.hat <- 0
-        
-   #     }
-    #    print(tau2.hat)
+
         if (opt.method == "L-BFGS-B") {
           beta.hat <- optim(beta.hat, function(beta) robust.optfun.fixtau(beta, tau2.hat),
                             method = opt.method, lower = -bound.beta, upper = bound.beta, 
@@ -259,15 +220,6 @@ grappleRobustEst <- function(input.list = NULL,
     if (s == 5)
       warning("Did not converge in the final step. May not find the global optimal point.")
 
-  #  if (is.null(tau2) && tau2.hat > bound.tau2) {
-  #    warning("Estimated overdispersion seems abnormaly large.")
-  #  }
-
- 
-  #  if (is.null(tau2) && (tau2.hat <= min(se_out^2) / 5)) {
-  #      warning("The estimated overdispersion parameter is very small. 
-  #              Consider using the simple model without overdispersion.")
-  #  }
 
     ### calculating asymptotic variance
     ## calculate the derivatives of t_fun at beta.hat, tau2.hat
@@ -309,15 +261,8 @@ grappleRobustEst <- function(input.list = NULL,
 
    if (diagnosis) {
         std.resid <- res / sqrt(var.res)
-        qqnorm(std.resid)
-        abline(0, 1)
-        if (length(std.resid) > 7) {
-          require(nortest)
-          print(ad.test(std.resid))
-          print(shapiro.test(std.resid[sample(length(std.resid), 
-                                              min(5000, length(std.resid)))]))
-        }
-    }
+   		qq.result <- qqDiagnosis(std.resid, plot.it = plot.it)
+   }
 
    if (is.null(tau2))
      tau2.se <- sqrt(asymp.var[nrow(asymp.var), nrow(asymp.var)])
@@ -332,6 +277,8 @@ grappleRobustEst <- function(input.list = NULL,
                                                  lower.tail = F)))# / sqrt(efficiency),
    if (diagnosis) {
         out$std.resid <- std.resid
+   		out$p <- qq.result$p
+		out$outliers <- qq.result$outliers
    }
 
  
@@ -341,7 +288,6 @@ grappleRobustEst <- function(input.list = NULL,
 
 #' Huber loss function and its derivatives
 #'
-#' @import stats
 #' @keywords internal
 #'
 rho.huber <- function(r, k = 1.345, deriv = 0) {
@@ -369,7 +315,6 @@ rho.huber <- function(r, k = 1.345, deriv = 0) {
 #' @param deriv The derivative function to calculate. 0 is the Tukey's loss function, 1 is for the first derivative and 2 for the second derivative function
 #'
 #' @return The value of the corresponding function at \code{r}
-#' @import stats
 #' @export
 #'
 rho.tukey <- function(r, k = 4.685, deriv = 0) {
@@ -387,7 +332,6 @@ rho.tukey <- function(r, k = 4.685, deriv = 0) {
 
 #' L2 loss function and its derivatives
 #'
-#' @import stats
 #' @keywords internal
 #'
 rho.l2 <- function(r, deriv = 0) {
@@ -401,6 +345,4 @@ rho.l2 <- function(r, deriv = 0) {
         stop("deriv must be 0, 1, or 2.")
     }
 }
-
-
 

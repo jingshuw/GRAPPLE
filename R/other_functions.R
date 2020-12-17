@@ -36,7 +36,7 @@ plink_clump <- function(dat,
         " --clump-kb ", clump_kb,
         " --out ", shQuote(fn, type=shell)
     )
-    system(fun2)
+    system(fun2, ignore.stdout = T, ignore.stderr = T)
     a <- fread(paste(fn, ".clumped", sep=""), he=T)
     ## a <- fread(paste(fn, sep=""), he=T)
     unlink(paste(fn, "*", sep=""))

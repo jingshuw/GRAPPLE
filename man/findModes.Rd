@@ -4,30 +4,29 @@
 \alias{findModes}
 \title{Use the multiple modes of the robust profile likelihood function to find out multiple pathways in MR and their marker SNPs.}
 \usage{
-findModes(input.list = NULL, b_exp = NULL, b_out = NULL,
-  se_exp = NULL, se_out = NULL, p.thres = NULL, sel.pvals = NULL,
-  marker.data = NULL, marker.p.thres = NULL, mode.lmts = c(-5, 5),
-  cor.mat = NULL, loss.function = c("tukey", "huber", "l2"),
+findModes(data, p.thres = NULL, marker.data = NULL,
+  marker.p.thres = NULL, mode.lmts = c(-5, 5), cor.mat = NULL,
+  loss.function = c("tukey", "huber", "l2"),
   k.findmodes = switch(loss.function[1], l2 = NA, huber = 1.345, tukey =
-  3), beta.mode = NULL, include.thres = 1, exclude.thres = 2,
-  map.marker = T, ldThres = 0.9, npoints = 10000)
+  3), include.thres = 1, exclude.thres = 2, map.marker = T,
+  ldThres = 0.9, npoints = 10000)
 }
 \arguments{
-\item{input.list}{The output of the GRAPPLE function \code{getInput}. If provided, then \code{b_exp}, \code{b_out}, \code{se_exp}, \code{se_out} and \code{sel.pvals} will all be extracted from it. An alternative is to set input.list as NULL and provide other other arguments explicitly. Default is NULL.}
+\item{data}{A data frame containing the information of the selected genetic instruments. 
+One can simply take the \code{data} element from the output of function \code{getInput}, or provide their own data frame.
+The required columns include \code{SNP} for the SNP rsID, the columns \code{gamma_exp1} to \code{gamma_expk} for the 
+estimated effect sizes of the SNPs on risk factors \code{1} to \code{k}, the columns \code{se_exp1} to \code{se_expk} for their
+standard deviations, the columns \code{gamma_out1} to \code{gamma_outm} for the 
+estimated effect sizes of the SNPs on diseases \code{1} to \code{m},the columns \code{se_out1} to \code{se_outm} for their 
+standard deviations.}
 
-\item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors. SNPs should be provided after clumping. Used only when \code{input.list} is NULL.}
+\item{p.thres}{The p-value threshold for SNP selection. The SNPs whose \code{selection_pvals} are less than \code{p.thres} are selected. 
+The default value is NULL, which is to include all SNPs in \code{data}. If it is not NULL, then \code{data} should have a column \code{selection_pvals}
+that stores the selection p-value of each SNP.}
 
-\item{b_out}{A vector of length \code{p} for the effect sizes of the selected \code{p} SNPs on the disease (outcome). Used only when \code{input.list} is NULL.}
-
-\item{se_exp}{A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp}. Used only when \code{input.list} is NULL.}
-
-\item{se_out}{A vector of length \code{p} for the standard deviations of each element in \code{b_out}. Used only when \code{input.list} is NULL.}
-
-\item{p.thres}{P-value threshold for SNP selection. Default is NULL, which is using all data provided. If not NULL, \code{sel.pvals} need to be provided. If \code{p.thres} is a scalar, then SNPs with \code{sel.pvals} less than \code{p.thres} are selected. If \code{p.thres} has two elements, then the first element is used as the lower bound and the second used as the upper bound.}
-
-\item{sel.pvals}{A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Used only when \code{p.thres} is not NULL, while \code{input.list} is NULL.}
-
-\item{marker.data}{A list of the data used to find markers. Default is NULL, which is using the same sets of SNPs as find the modes for finding the markers. Another choice is to pass the output \code{marer.data} from the grapple function \code{getInput}. If the user wants to provide his/her own list, then it should be a list containing 4 elements, \code{b_exp}, \code{b_out}, \code{se_exp} and \code{se_out}. This argument is used only when \code{input.list} is NULL. If \code{input.list} is non-null, then \code{marker.data} will be set as \code{input.list$marker.data} regardless of the value of this argument.}
+\item{marker.data}{A data frame containing the information of candidate marker genes.
+Default is NULL, which sets \code{marker.data} to \code{data}. 
+Another choice is to use the \code{marker.data} element in the output of \code{getInput}.}
 
 \item{marker.p.thres}{P-value threshold for marker SNP selection. See \code{p.thres}}
 
@@ -36,8 +35,6 @@ findModes(input.list = NULL, b_exp = NULL, b_out = NULL,
 \item{loss.function}{Loss function used, one of "tukey", "huber" or "l2". Default is "tukey", which is robust to outlier SNPs with large pleiotropic effects}
 
 \item{k.findmodes}{Tuning parameters of the loss function, for loss "l2", it is NA, for loss "huber", default is 1.345 and for loss "tukey", default is 3.}
-
-\item{beta.mode}{Allow providing values of the modes to find out marker SNPs for any given modes}
 
 \item{include.thres}{Absolute value upper threshold of the standardized test statistics of one SNP on one mode for the SNP to be included as a marker for that mode, default is 1.4}
 

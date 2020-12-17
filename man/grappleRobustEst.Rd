@@ -4,31 +4,28 @@
 \alias{grappleRobustEst}
 \title{Robust multivariate MR estimation}
 \usage{
-grappleRobustEst(input.list = NULL, b_exp = NULL, b_out = NULL,
-  se_exp = NULL, se_out = NULL, p.thres = NULL, sel.pvals = NULL,
-  tau2 = NULL, cor.mat = NULL, loss.function = c("tukey", "huber",
-  "l2"), k = switch(loss.function[1], l2 = NA, huber = 1.345, tukey =
-  4.685), niter = 20, tol = .Machine$double.eps^0.5,
-  opt.method = "L-BFGS-B", diagnosis = FALSE)
+grappleRobustEst(data, p.thres = NULL, cor.mat = NULL, tau2 = NULL,
+  loss.function = c("tukey", "huber", "l2"),
+  k = switch(loss.function[1], l2 = NA, huber = 1.345, tukey = 4.685),
+  niter = 20, tol = .Machine$double.eps^0.5, opt.method = "L-BFGS-B",
+  diagnosis = T, plot.it = T)
 }
 \arguments{
-\item{input.list}{The output of the GRAPPLE function \code{getInput}. If provided, then \code{b_exp}, \code{b_out}, \code{se_exp}, \code{se_out} and \code{sel.pvals} will all be extracted from it. An alternative is to set input.list as NULL and provide other other arguments explicitly. Default is NULL.}
+\item{data}{A data frame containing the information of the selected genetic instruments. 
+One can simply take the \code{data} element from the output of function \code{getInput}, or provide their own data frame.
+The required columns include \code{SNP} for the SNP rsID, the columns \code{gamma_exp1} to \code{gamma_expk} for the 
+estimated effect sizes of the SNPs on risk factors \code{1} to \code{k}, the columns \code{se_exp1} to \code{se_expk} for their
+standard deviations, the columns \code{gamma_out1} to \code{gamma_outm} for the 
+estimated effect sizes of the SNPs on diseases \code{1} to \code{m},the columns \code{se_out1} to \code{se_outm} for their 
+standard deviations.}
 
-\item{b_exp}{A matrix of size \code{p * k} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors. SNPs should be provided after clumping. Used only when \code{input.list} is NULL.}
-
-\item{b_out}{A vector of length \code{p} for the effect sizes of the selected \code{p} SNPs on the disease (outcome). Used only when \code{input.list} is NULL.}
-
-\item{se_exp}{A matrix of size \code{p * k} for the standard deviations of each entry in \code{b_exp}. Used only when \code{input.list} is NULL.}
-
-\item{se_out}{A vector of length \code{p} for the standard deviations of each element in \code{b_out}. Used only when \code{input.list} is NULL.}
-
-\item{p.thres}{P-value threshold for SNP selection. Default is NULL, which is using all data provided. If not NULL, \code{sel.pvals} need to be provided. If \code{p.thres} is a scalar, then SNPs with \code{sel.pvals} less than \code{p.thres} are selected. If \code{p.thres} has two elements, then the first element is used as the lower bound and the second used as the upper bound.}
-
-\item{sel.pvals}{A vector of length \code{p} for the selection p-values of corresponding SNPs. Default is NULL. Used only when \code{p.thres} is not NULL, while \code{input.list} is NULL.}
-
-\item{tau2}{The dispersion parameter. The default value is NULL, which is to be determined automatically}
+\item{p.thres}{The p-value threshold for SNP selection. The SNPs whose \code{selection_pvals} are less than \code{p.thres} are selected. 
+The default value is NULL, which is to include all SNPs in \code{data}. If it is not NULL, then \code{data} should have a column \code{selection_pvals}
+that stores the selection p-value of each SNP.}
 
 \item{cor.mat}{Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Used only when \code{input.list} is NULL and the default value is NULL, for the identity matrix.}
+
+\item{tau2}{The dispersion parameter. The default value is NULL, which is to be estimated by the function}
 
 \item{loss.function}{Loss function used, one of "tukey", "huber" or "l2". Default is "tukey", which is robust to outlier SNPs with large pleiotropic effects}
 
@@ -41,6 +38,8 @@ grappleRobustEst(input.list = NULL, b_exp = NULL, b_out = NULL,
 \item{opt.method}{the optimization used, which is one of choices the R function \code{optim} accepts. Default value is "L-BFGS-B".}
 
 \item{diagnosis}{Run diagnosis analysis based on the residuals or not, default is FALSE}
+
+\item{plot.it}{Whether show the QQ-plot or not if diagnosis if performed. Default is TRUE.}
 }
 \value{
 A list with elements
