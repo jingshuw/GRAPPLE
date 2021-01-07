@@ -4,8 +4,11 @@
 \alias{qqDiagnosis}
 \title{QQ-plot diagnosis and outlier detection from standardized residuals}
 \usage{
-qqDiagnosis(std.residuals, outlier.quantile = 0.1/length(std.residuals),
-  plot.it = T)
+qqDiagnosis(
+  std.residuals,
+  outlier.quantile = 0.1/length(std.residuals),
+  plot.it = T
+)
 }
 \arguments{
 \item{std.residuals}{A vector of standardized residuals, can be the output element \code{std.resid} from function \code{grappleRobustEst}}

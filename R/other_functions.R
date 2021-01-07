@@ -1,10 +1,10 @@
 #' @keywords internal
-#' 
-plink_clump <- function(dat, 
-						plink_exe,
+#'
+plink_clump <- function(dat,
+                        plink_exe,
                         refdat,
-						clump_kb = 10000,
-						clump_r2 = 0.001,
+                        clump_kb = 10000,
+                        clump_r2 = 0.001,
                         clump_p1 = 1,
                         clump_p2 = 1,
                         tempdir = "temp")
@@ -13,14 +13,13 @@ plink_clump <- function(dat,
     snps <- dat$SNP
     if (!("pval" %in% colnames(dat)))
         dat$pval <- dat$pval.exposure
-    pvals <- dat$pval
+    pvals <- pmin(1, dat$pval)
     dir.create(file.path(tempdir), showWarnings = FALSE)
 
     shell <- ifelse(Sys.info()['sysname'] == "Windows", "cmd", "sh")
     fn <- tempfile(tmpdir = tempdir)
     require(data.table)
     fwrite(data.frame(SNP=snps, P=pvals), file=fn, row=F, col=T, qu=F, sep = " ")
-
 
     fun2 <- paste0(
       # shQuote(plink_exe),
@@ -65,5 +64,3 @@ formatData <- function(dat, cls = c("exposure", "outcome")) {
     colnames(dat)[-idx] <- paste(colnames(dat)[-idx], ".", cls, sep = "")
     return(dat)
 }
-
-
