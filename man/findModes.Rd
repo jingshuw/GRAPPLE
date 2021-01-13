@@ -4,23 +4,32 @@
 \alias{findModes}
 \title{Use the multiple modes of the robust profile likelihood function to find out multiple pathways in MR and their marker SNPs.}
 \usage{
-findModes(data, p.thres = NULL, marker.data = NULL,
-  marker.p.thres = NULL, mode.lmts = c(-5, 5), cor.mat = NULL,
+findModes(
+  data,
+  p.thres = NULL,
+  marker.data = NULL,
+  marker.p.thres = NULL,
+  mode.lmts = c(-5, 5),
+  cor.mat = NULL,
   loss.function = c("tukey", "huber", "l2"),
-  k.findmodes = switch(loss.function[1], l2 = NA, huber = 1.345, tukey =
-  3), include.thres = 1, exclude.thres = 2, map.marker = T,
-  ldThres = 0.9, npoints = 10000)
+  k.findmodes = switch(loss.function[1], l2 = NA, huber = 1.345, tukey = 3),
+  include.thres = 1,
+  exclude.thres = 2,
+  map.marker = T,
+  ldThres = 0.9,
+  npoints = 10000
+)
 }
 \arguments{
-\item{data}{A data frame containing the information of the selected genetic instruments. 
+\item{data}{A data frame containing the information of the selected genetic instruments.
 One can simply take the \code{data} element from the output of function \code{getInput}, or provide their own data frame.
-The required columns include \code{SNP} for the SNP rsID, the columns \code{gamma_exp1} to \code{gamma_expk} for the 
+The required columns include \code{SNP} for the SNP rsID, the columns \code{gamma_exp1} to \code{gamma_expk} for the
 estimated effect sizes of the SNPs on risk factors \code{1} to \code{k}, the columns \code{se_exp1} to \code{se_expk} for their
-standard deviations, the columns \code{gamma_out1} to \code{gamma_outm} for the 
-estimated effect sizes of the SNPs on diseases \code{1} to \code{m},the columns \code{se_out1} to \code{se_outm} for their 
+standard deviations, the columns \code{gamma_out1} to \code{gamma_outm} for the
+estimated effect sizes of the SNPs on diseases \code{1} to \code{m},the columns \code{se_out1} to \code{se_outm} for their
 standard deviations.}
 
-\item{p.thres}{The p-value threshold for SNP selection. The SNPs whose \code{selection_pvals} are less than \code{p.thres} are selected. 
+\item{p.thres}{The p-value threshold for SNP selection. The SNPs whose \code{selection_pvals} are less than \code{p.thres} are selected.
 The default value is NULL, which is to include all SNPs in \code{data}. If it is not NULL, then \code{data} should have a column \code{selection_pvals}
 that stores the selection p-value of each SNP.}
 

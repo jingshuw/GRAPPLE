@@ -1,9 +1,9 @@
 Package: GRAPPLE
-Title: R Package for MR Framework GRAPPLE 
+Title: R Package for MR Framework GRAPPLE
 Version: 0.0.1.0000
 Authors@R: person("Jingshu", "Wang", email = "first.last@example.com", role = c("aut", "cre"))
 Description: A comprehensive framework for two-sample Mendelian Randomization with heterogeneous genetic Genetic instruments
-Depends: 
+Depends:
 	R (>= 3.4.0),
 	ggplot2
 License: GPL (>=2)
@@ -13,7 +13,9 @@ Imports:
     stats,
     ggplot2,
     nortest,
-	data.table,
-	haploR,
-	ggrepel
-RoxygenNote: 6.1.1
+    data.table,
+    haploR,
+    ggrepel,
+    dplyr,
+    tools
+RoxygenNote: 7.1.1

@@ -2,14 +2,14 @@
 #'
 #' The main function of GRAPPLE to estimate causal effects of risk factors \code{beta} under a random effect model of the pleiotropic effects.
 #'
-#' @param data A data frame containing the information of the selected genetic instruments. 
+#' @param data A data frame containing the information of the selected genetic instruments.
 #' One can simply take the \code{data} element from the output of function \code{getInput}, or provide their own data frame.
-#' The required columns include \code{SNP} for the SNP rsID, the columns \code{gamma_exp1} to \code{gamma_expk} for the 
+#' The required columns include \code{SNP} for the SNP rsID, the columns \code{gamma_exp1} to \code{gamma_expk} for the
 #' estimated effect sizes of the SNPs on risk factors \code{1} to \code{k}, the columns \code{se_exp1} to \code{se_expk} for their
-#' standard deviations, the columns \code{gamma_out1} to \code{gamma_outm} for the 
-#' estimated effect sizes of the SNPs on diseases \code{1} to \code{m},the columns \code{se_out1} to \code{se_outm} for their 
+#' standard deviations, the columns \code{gamma_out1} to \code{gamma_outm} for the
+#' estimated effect sizes of the SNPs on diseases \code{1} to \code{m},the columns \code{se_out1} to \code{se_outm} for their
 #' standard deviations.
-#' @param p.thres The p-value threshold for SNP selection. The SNPs whose \code{selection_pvals} are less than \code{p.thres} are selected. 
+#' @param p.thres The p-value threshold for SNP selection. The SNPs whose \code{selection_pvals} are less than \code{p.thres} are selected.
 #' The default value is NULL, which is to include all SNPs in \code{data}. If it is not NULL, then \code{data} should have a column \code{selection_pvals}
 #' that stores the selection p-value of each SNP.
 #' @param cor.mat Either NULL or a \code{k + 1} by \code{k + 1} symmetric matrix. The shared correlation matrix for \code{(b_exp[j], b_out[j])} across SNP j. Used only when \code{input.list} is NULL and the default value is NULL, for the identity matrix.
@@ -34,14 +34,14 @@
 #' @import ggplot2
 #' @export
 grappleRobustEst <- function(data,
-							               p.thres = NULL,
-                             cor.mat = NULL, 
-							               tau2 = NULL,
-                             loss.function = c("tukey", "huber", "l2"), 
-                             k = switch(loss.function[1], 
-                                        l2 = NA, huber = 1.345, 
-                                        tukey = 4.685), 
-                             niter = 20, 
+                             p.thres = NULL,
+                             cor.mat = NULL,
+                             tau2 = NULL,
+                             loss.function = c("tukey", "huber", "l2"),
+                             k = switch(loss.function[1],
+                                        l2 = NA, huber = 1.345,
+                                        tukey = 4.685),
+                             niter = 20,
                              tol = .Machine$double.eps^0.5,
                              opt.method = "L-BFGS-B",
                              diagnosis = T, plot.it = T) {
@@ -54,13 +54,13 @@ grappleRobustEst <- function(data,
 		data <- data[data$selection_pvals < p.thres, ]
 
 
-	
+
 	b_exp <- as.matrix(data[, grep("gamma_exp", nn), drop = F])
 	se_exp <-  as.matrix(data[, grep("se_exp", nn), drop = F])
 	b_out <-  data[, grep("gamma_out", nn)[1]]
 	se_out <-  data[, grep("se_out", nn)[1]]
 
- 
+
     loss.function <- match.arg(loss.function, c("tukey", "huber", "l2"))
     if (is.null(cor.mat))
       cor.mat <- diag(rep(1, ncol(b_exp) + 1))
@@ -102,11 +102,12 @@ grappleRobustEst <- function(data,
       tau2.hat <- 0
     else
       tau2.hat <- tau2
-    bound.beta <- apply(abs(b_out / b_exp), 2, function(v)quantile(v[is.finite(v)], 
+    bound.beta <- apply(abs(b_out / b_exp), 2, function(v)quantile(v[is.finite(v)],
 																   probs = 0.95, na.rm = T)) * 2
+
     bound.tau2 <- median(b_out^2) * 2
     if (ncol(b_exp) == 1) {
-      beta.seq <- seq(-bound.beta, bound.beta, length.out = 5000)
+        beta.seq <- seq(-bound.beta, bound.beta, length.out = 5000)
       beta.hat <- beta.seq[which.max(sapply(beta.seq, robust.optfun.fixtau, tau2 = 0))]
     } else {
       beta.hat <- as.vector(lm(b_out ~ b_exp + 0)$coef)
@@ -116,7 +117,7 @@ grappleRobustEst <- function(data,
         return(robust.optfun.fixtau(beta, tau2=0))
       }
 
-      for (i in 1:length(beta.hat)) {
+            for (i in 1:length(beta.hat)) {
         beta.seq <- seq(-bound.beta[i], bound.beta[i], length.out = 5000)
         beta.hat[i] <- beta.seq[which.max(sapply(beta.seq, temp.fun, idx = i))]
       }
@@ -132,10 +133,10 @@ grappleRobustEst <- function(data,
         if (temp < 0)
           tau2.hat <- 0
         else {
-          tau2.hat <- tryCatch(uniroot(function(tau2) sum(robust.E(beta.hat, tau2)), 
-                                       bound.tau2 * c(0, 1), 
-									   extendInt = "downX", 
-                                       tol = .Machine$double.eps^0.25)$root, 
+          tau2.hat <- tryCatch(uniroot(function(tau2) sum(robust.E(beta.hat, tau2)),
+                                       bound.tau2 * c(0, 1),
+									   extendInt = "downX",
+                                       tol = .Machine$double.eps^0.25)$root,
                                error = function(e) {warning("Did not find a solution for tau2."); 0})
 		}
       }
@@ -143,42 +144,42 @@ grappleRobustEst <- function(data,
 
         if (opt.method == "L-BFGS-B") {
           beta.hat <- optim(beta.hat, function(beta) robust.optfun.fixtau(beta, tau2.hat),
-                            method = opt.method, lower = -bound.beta, upper = bound.beta, 
+                            method = opt.method, lower = -bound.beta, upper = bound.beta,
                             control = list(fnscale = -1))$par
         } else
           beta.hat <- optim(beta.hat, function(beta) robust.optfun.fixtau(beta, tau2.hat),
-                            method = opt.method, #lower = -bound.beta, upper = bound.beta, 
+                            method = opt.method, #lower = -bound.beta, upper = bound.beta,
                             control = list(fnscale = -1))$par
         if (length(beta.hat) == 1) {
           beta.hat.temp <- beta.seq[which.max(sapply(beta.seq, robust.optfun.fixtau, tau2 = tau2.hat))]
           if (robust.optfun.fixtau(beta.hat.temp, tau2.hat) > robust.optfun.fixtau(beta.hat, tau2.hat))
             beta.hat <- beta.hat.temp
-        } 
-        
+        }
+
         int.extend <- 0
         while (abs(beta.hat) > 0.95 * bound.beta && int.extend <= niter) {
             int.extend <- int.extend + 1
             bound.beta <- bound.beta * 2
-            beta.hat <- optimize(function(beta) robust.optfun.fixtau(beta, tau2.hat), 
+            beta.hat <- optimize(function(beta) robust.optfun.fixtau(beta, tau2.hat),
                                  bound.beta * c(-1, 1), maximum = TRUE)$maximum
         }
         if (int.extend == niter) {
             stop("Failed to find beta.")
         }
-        if (max(abs(beta.hat.old - beta.hat) / abs(beta.hat + 1e-10)) + 
+        if (max(abs(beta.hat.old - beta.hat) / abs(beta.hat + 1e-10)) +
             abs(tau2.hat.old - tau2.hat) / abs(tau2.hat + 1e-10) <= tol) {
             break
         }
     }
 
-    if (max(abs(beta.hat.old - beta.hat) / abs(beta.hat + 1e-10)) + 
+    if (max(abs(beta.hat.old - beta.hat) / abs(beta.hat + 1e-10)) +
         abs(tau2.hat.old - tau2.hat) / abs(tau2.hat + 1e-10) > tol) {
-      warning("Did not converge when solving the estimating equations. 
+      warning("Did not converge when solving the estimating equations.
               Consider to increase niter or decrease tol.")
     }
- 
 
-    ## final round of coordinate-wise grid-search optimization to make the non-convex optimization 
+
+    ## final round of coordinate-wise grid-search optimization to make the non-convex optimization
     ## more likely reach a global optimal point
 
     for(s in 1:5) {
@@ -189,9 +190,9 @@ grappleRobustEst <- function(data,
         if (temp < 0)
           tau2.hat <- 0
         else
-          tau2.hat <- tryCatch(uniroot(function(tau2) sum(robust.E(beta.hat, tau2)), 
-                                       bound.tau2 * c(0, 1), extendInt = "downX", 
-                                       tol = bound.tau2 * .Machine$double.eps^0.25)$root, 
+          tau2.hat <- tryCatch(uniroot(function(tau2) sum(robust.E(beta.hat, tau2)),
+                                       bound.tau2 * c(0, 1), extendInt = "downX",
+                                       tol = bound.tau2 * .Machine$double.eps^0.25)$root,
                                error = function(e) {warning("Did not find a solution for tau2."); 0})
       }
       temp.fun <- function(bb, idx, beta.hat.temp = beta.hat) {
@@ -211,7 +212,7 @@ grappleRobustEst <- function(data,
         if (max(abs(beta.hat.old - beta.hat) / abs(beta.hat + 1e-10)) <= tol)
           break
       }
-      if (max(abs(beta.hat.old - beta.hat) / abs(beta.hat + 1e-10)) + 
+      if (max(abs(beta.hat.old - beta.hat) / abs(beta.hat + 1e-10)) +
           abs(tau2.hat.old - tau2.hat) / abs(tau2.hat + 1e-10) <= tol) {
         break
       }
@@ -225,16 +226,16 @@ grappleRobustEst <- function(data,
     ## calculate the derivatives of t_fun at beta.hat, tau2.hat
     r <- ncol(b_exp)
     p <- nrow(b_exp)
-    res <- as.vector(b_out - b_exp %*% beta.hat) ## size p 
+    res <- as.vector(b_out - b_exp %*% beta.hat) ## size p
     temp <- t(t(cbind(se_exp, se_out)) * c(-beta.hat, 1))  ## size p * (r + 1)
     var.res <- rowSums((temp %*% cor.mat) * temp) + tau2.hat ## size p
     t.values <- res/sqrt(var.res) ## size p
     ## calculate each row as Sigma_X_j beta - Sigma_{X_jY_j}
-    coefs <- se_exp * t(cor.mat[1:r, 1:r] %*% (beta.hat * t(se_exp))) - 
+    coefs <- se_exp * t(cor.mat[1:r, 1:r] %*% (beta.hat * t(se_exp))) -
              t(cor.mat[1:r, r + 1] * t(se_exp * se_out)) ## size p * r
     ## matrix of u_j
     u.values <- - (var.res * b_exp + res * coefs) / var.res^{3/2}
-    S <- t(u.values) %*% u.values 
+    S <- t(u.values) %*% u.values
 
     ## calculate B
     B <- matrix(0, r + 1, r + 1)
@@ -246,9 +247,9 @@ grappleRobustEst <- function(data,
     A[r + 1, r+1] <- - c3/2 * sum(1/var.res)
     A[1:r, r+1] <- c4 * colSums(coefs / var.res^2)
 
-    
+
     rho.dev.var <- rho(t.values, deriv = 1) / var.res^{3/2} ## size p
-    temp <- array(0, c(p, r, r))  
+    temp <- array(0, c(p, r, r))
     rho.se <- rho.dev.var * se_exp
     for (j in 1:p)
       temp[j, , ] <- res[j] * t(rho.se[j, ] * cor.mat[1:r, 1:r]) * se_exp[j, ]
@@ -273,7 +274,7 @@ grappleRobustEst <- function(data,
                 tau2.hat = tau2.hat,
                 beta.var = asymp.var[1:ncol(b_exp), 1:ncol(b_exp)],
                 tau2.se = tau2.se, # / sqrt(efficiency),
-                beta.p.value = pmin(1, 2 * pnorm(abs(beta.hat) / sqrt(diag(asymp.var)[1:r]), 
+                beta.p.value = pmin(1, 2 * pnorm(abs(beta.hat) / sqrt(diag(asymp.var)[1:r]),
                                                  lower.tail = F)))# / sqrt(efficiency),
    if (diagnosis) {
         out$std.resid <- std.resid
@@ -281,7 +282,7 @@ grappleRobustEst <- function(data,
 		out$outliers <- qq.result$outliers
    }
 
- 
+
     out
 
 }
@@ -345,4 +346,3 @@ rho.l2 <- function(r, deriv = 0) {
         stop("deriv must be 0, 1, or 2.")
     }
 }
-

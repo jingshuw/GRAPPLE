@@ -4,11 +4,20 @@
 \alias{getInput}
 \title{Preprocess GWAS summary statistics datasets}
 \usage{
-getInput(sel.files, exp.files, out.files, plink_refdat,
-  max.p.thres = 0.01, cal.cor = T, p.thres.cor = 0.5,
-  get.marker.candidates = T, marker.p.thres = 1e-05,
-  marker.p.source = "exposure", clump_r2 = 0.001,
-  clump_r2_formarkers = 0.05)
+getInput(
+  sel.files,
+  exp.files,
+  out.files,
+  plink_refdat,
+  max.p.thres = 0.01,
+  cal.cor = T,
+  p.thres.cor = 0.5,
+  get.marker.candidates = T,
+  marker.p.thres = 1e-05,
+  marker.p.source = "exposure",
+  clump_r2 = 0.001,
+  clump_r2_formarkers = 0.05
+)
 }
 \arguments{
 \item{sel.files}{A vector of the GWAS summary statistics file names for the risk factors SNP selection. Each GWAS file is a ".csv" or ".txt" file containing a data frame that at least has a column "SNP" for the SNP ids and "pval" for the p-values. The length of \code{sel.files} are not required to be the same as that of \code{exp.files} and the order of the files do not matter, while we strongly suggest having one selection file for each risk factor.}
@@ -37,12 +46,12 @@ getInput(sel.files, exp.files, out.files, plink_refdat,
 }
 \value{
 A list of selected summary statistics, which include
-\item{data}{A data frame of size \code{p * (3 + 2k + 2m + 1)} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors (exposures). 
-The first three columns include the SNP rsID, the effect allele and other allele after harmonizing, 
-the next \code{2k} columns are the estimated effect sizes and standard deviations for the \code{k} risk factors stored in \code{exp.files}, 
+\item{data}{A data frame of size \code{p * (3 + 2k + 2m + 1)} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors (exposures).
+The first three columns include the SNP rsID, the effect allele and other allele after harmonizing,
+the next \code{2k} columns are the estimated effect sizes and standard deviations for the \code{k} risk factors stored in \code{exp.files},
 the next \code{2m} columns are the estimated effect sizes and standard deviations for the \code{m} diseases stored in \code{exp.files}
 and the the last columns are the selection p-values obtained from \code{sel.files}}
-\item{marker.data}{A data frame for marker candidate SNPs, which has the same columns as \code{data}}. 
+\item{marker.data}{A data frame for marker candidate SNPs, which has the same columns as \code{data}}.
 \item{cor.mat}{The estimated \code{(k + m)} by \code{(k + m)} correlation matrix between the \code{k} risk factors and the disease (outcome) shared by SNPs. The last column is for the outcome trait.}
 }
 \description{
