@@ -272,15 +272,12 @@ getInput <- function(sel.files,
                                 clump_r2 = clump_r2_formarkers)
         marker.SNPs <- as.character(data.sel$SNP)
     }
-    print("check1")
 
     colnames(beta_exp) <- paste0("gamma_exp", 1:length(exp.files))
     colnames(se_exp) <-  paste0("se_exp", 1:length(exp.files))
 
     colnames(beta_out) <- paste0("gamma_out", 1:length(out.files))
     colnames(se_out) <-  paste0("se_out", 1:length(out.files))
-
-    print("check2")
 
 
     beta_exp.marker <- beta_exp[as.character(marker.SNPs), , drop = F]
