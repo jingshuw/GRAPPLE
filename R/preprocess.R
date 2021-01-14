@@ -16,6 +16,7 @@
 #' @param marker.p.source source of p-values of mode markers, a string of either "exposure" or "selection". Default is "exposure" for obtaining more markers.
 #' @param clump_r2 The clumping r2 threshold in PLINK for genetic instrument selection. Default is set to 0.001 for selection of independent SNPs.
 #' @param clump_r2_formarkers The clumping r2 threshold in PLINK. Default is set to 0.05 for selection of candidates for the marker SNPs.
+#' @param plink_exe The name of the plink exe. Default is NULL, which uses "plink". For users with Linux systems, one may want to have a different name, like "./plink" depending on where they install plink 
 #'
 #' @return A list of selected summary statistics, which include
 #' \item{data}{A data frame of size \code{p * (3 + 2k + 2m + 1)} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors (exposures).
@@ -39,7 +40,8 @@ getInput <- function(sel.files,
                      marker.p.thres = 1e-5,
                      marker.p.source = "exposure",
                      clump_r2 = 0.001,
-                     clump_r2_formarkers = 0.05) {
+                     clump_r2_formarkers = 0.05,
+					 plink_exe = NULL) {
     if (length(exp.files) > 1) {
         if (get.marker.candidates)
             print("Marker candidates will not be obtained as number of risk factors k > 1")
@@ -48,6 +50,9 @@ getInput <- function(sel.files,
 
     if (missing(plink_refdat))
         stop("Missing PLINK reference files.")
+
+	if (is.null(plink_exe)) ## allow user specific plink_exe name. For LINUX systems, one may want to use "./plink"
+		plink_exe <- "plink"
 
 
     sel.SNPs <- NULL
@@ -259,15 +264,14 @@ getInput <- function(sel.files,
     data.sel <- data.frame(SNP = sel.SNPs, pval = pvals)
 
     print("Start clumping using PLINK ...")
-    print(head(data.sel))
-    data.sel <- plink_clump(data.sel, "plink",
+	data.sel <- plink_clump(data.sel, plink_exe,
                             plink_refdat, clump_r2 = clump_r2)
     sel.SNPs <- as.character(data.sel$SNP)
 
 
     if (get.marker.candidates) {
         data.sel <- data.frame(SNP = marker.SNPs, pval = marker.pvals)
-        data.sel <- plink_clump(data.sel, "plink",
+        data.sel <- plink_clump(data.sel, plink_exe,
                                 plink_refdat,
                                 clump_r2 = clump_r2_formarkers)
         marker.SNPs <- as.character(data.sel$SNP)
