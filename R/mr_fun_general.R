@@ -48,10 +48,10 @@ grappleRobustEst <- function(data,
 
   nn <- colnames(data)
 	if (!is.null(p.thres)) {
-	  if (length(grep("selection_pvals", nn)) == 0)
-	    stop("data need to include a column named selection_pvals for the selection p-value of each SNP.")
+		if (length(grep("selection_pvals", nn)) == 0)
+			stop("data need to include a column named selection_pvals for the selection p-value of each SNP.")
+  	  	data <- data[data$selection_pvals < p.thres, ]
 	}
-		data <- data[data$selection_pvals < p.thres, ]
 
 
 
