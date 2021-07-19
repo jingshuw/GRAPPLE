@@ -1,11 +1,10 @@
 Package: GRAPPLE
 Title: R Package for MR Framework GRAPPLE
-Version: 0.0.1.0000
-Authors@R: person("Jingshu", "Wang", email = "first.last@example.com", role = c("aut", "cre"))
-Description: A comprehensive framework for two-sample Mendelian Randomization with heterogeneous genetic Genetic instruments
+Version: 0.2.0
+Authors@R: c(person("Jingshu", "Wang", email = "jingshuw@uchicago.edu", role = c("aut", "cre")), person("Qingyuan", "Zhao", email = "qyzhao@statslab.cam.ac.uk", role = c("aut")))
+Description: Fitting and diagnosing two-sample summary data Mendelian randomization with heterogeneous instruments.
 Depends:
 	R (>= 3.4.0),
-	ggplot2
 License: GPL (>=2)
 Encoding: UTF-8
 LazyData: true
