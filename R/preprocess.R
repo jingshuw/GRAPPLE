@@ -16,7 +16,7 @@
 #' @param marker.p.source source of p-values of mode markers, a string of either "exposure" or "selection". Default is "exposure" for obtaining more markers.
 #' @param clump_r2 The clumping r2 threshold in PLINK for genetic instrument selection. Default is set to 0.001 for selection of independent SNPs.
 #' @param clump_r2_formarkers The clumping r2 threshold in PLINK. Default is set to 0.05 for selection of candidates for the marker SNPs.
-#' @param plink_exe The name of the plink exe. Default is NULL, which uses "plink". For users with Linux systems, one may want to have a different name, like "./plink" depending on where they install plink 
+#' @param plink_exe The name of the plink exe. Default is NULL, which uses "plink". For users with Linux systems, one may want to have a different name, like "./plink" depending on where they install plink
 #'
 #' @return A list of selected summary statistics, which include
 #' \item{data}{A data frame of size \code{p * (3 + 2k + 2m + 1)} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors (exposures).
@@ -29,6 +29,8 @@
 #'
 #' @importFrom data.table fread
 #' @importFrom tools file_ext
+#' @importFrom TwoSampleMR harmonise_data
+#'
 #' @export
 getInput <- function(sel.files,
                      exp.files,
