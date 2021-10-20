@@ -16,7 +16,7 @@
 #' @param marker.p.source source of p-values of mode markers, a string of either "exposure" or "selection". Default is "exposure" for obtaining more markers.
 #' @param clump_r2 The clumping r2 threshold in PLINK for genetic instrument selection. Default is set to 0.001 for selection of independent SNPs.
 #' @param clump_r2_formarkers The clumping r2 threshold in PLINK. Default is set to 0.05 for selection of candidates for the marker SNPs.
-#' @param plink_exe The name of the plink exe. Default is NULL, which uses "plink". For users with Linux systems, one may want to have a different name, like "./plink" depending on where they install plink 
+#' @param plink_exe The name/path of the plink command. Default is "plink". For users with Linux / Windows systems, this command would not work and one need to specify the path of the exe file, like "./plink" depending on where they install plink 
 #'
 #' @return A list of selected summary statistics, which include
 #' \item{data}{A data frame of size \code{p * (3 + 2k + 2m + 1)} for the effect sizes of \code{p} number of selected independent SNPs (instruments) on \code{k} risk factors (exposures).
@@ -41,7 +41,7 @@ getInput <- function(sel.files,
                      marker.p.source = "exposure",
                      clump_r2 = 0.001,
                      clump_r2_formarkers = 0.05,
-					 plink_exe = NULL) {
+					 plink_exe = "plink") {
     if (length(exp.files) > 1) {
         if (get.marker.candidates)
             print("Marker candidates will not be obtained as number of risk factors k > 1")
@@ -51,8 +51,6 @@ getInput <- function(sel.files,
     if (missing(plink_refdat))
         stop("Missing PLINK reference files.")
 
-	if (is.null(plink_exe)) ## allow user specific plink_exe name. For LINUX systems, one may want to use "./plink"
-		plink_exe <- "plink"
 
 
     sel.SNPs <- NULL
