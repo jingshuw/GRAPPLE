@@ -55,7 +55,7 @@ data.list <- getInput(sel.file, exp.file, out.file, plink_refdat, max.p.thres = 
 
 This function extracts all independent SNPs whose selection p-values do not exceed 0.01. It returns three elements. One is 'data' which is a data frame of the summary statistics of the selected SNPs, the other is 'marker.data' which is a data frame for all candidate marker SNPs. The difference between 'data' and 'marker.data' is that we use a more stringent r2 (0.001) in LD clumping for the selection of genetic instruments to guarantee independence than in selecting candidate marker SNPs (r2 = 0.05). The third element is the estimated correlation matrix for the GWAS cohorts. 
 
-We use PLINK to perform LD clumping. The default name/path of the plink command is 'plink' (passed through the argument \code{plink_exe}). For users with Linux / Windows systems, this command would not work and one need to specify the path of the exe file, like "./plink" depending on where they install plink. If R fails to run the plink command, there will be an error stating that the clumped file is not found.
+We use PLINK to perform LD clumping. The default name/path of the plink command is "plink" (passed through the argument `plink_exe`). For users with Linux / Windows systems, this command would not work and one need to specify the path of the exe file, like "./plink" depending on where they install plink. If R fails to run the plink command, there will be an error stating that the clumped file is not found.
 
 ## Basic Usage
 
