@@ -57,6 +57,8 @@ getInput <- function(sel.files,
     pvals <- NULL
     sel.SNPs.cor <- c()
     k <- length(exp.files)
+    ### Bonferroni correction
+    max.p.thres <- max.p.thres/k
     for (file in sel.files) {
         print(paste("loading data for selection:", file, "..."))
         file.type <- file_ext(file)
@@ -100,8 +102,8 @@ getInput <- function(sel.files,
 
     }
 
-    ## Bonferroni correction on the selected p-values when there are more than one risk factor
-    pvals <- pvals * length(sel.files)
+    ### Bonferroni correction on the selected p-values when there are more than one risk factor
+    #pvals <- pvals * length(sel.files)
 
     beta_exp <- NULL
     se_exp <- NULL
