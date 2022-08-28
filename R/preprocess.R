@@ -55,7 +55,7 @@ getInput <- function(sel.files,
 
     sel.SNPs <- NULL
     pvals <- NULL
-    Sel.SNPs.cor <- c()
+    sel.SNPs.cor <- c()
     k <- length(exp.files)
     for (file in sel.files) {
         print(paste("loading data for selection:", file, "..."))
@@ -129,8 +129,11 @@ getInput <- function(sel.files,
         } else {
             marker.SNPs <- c()
         }
-        dat <- dat[dat$SNP %in% c(union(sel.SNPs, marker.SNPs),
+	
+	
+	dat <- dat[dat$SNP %in% c(union(sel.SNPs, marker.SNPs),
                                   sel.SNPs.cor), ]
+	
 
 
         ## harmonize one dataset by one dataset
