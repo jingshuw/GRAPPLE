@@ -157,11 +157,14 @@ grappleRobustEst <- function(data,
         }
 
         int.extend <- 0
-        while (abs(beta.hat) > 0.95 * bound.beta && int.extend <= niter) {
+        while (abs(beta.hat) > 0.95 * bound.beta && int.extend <= niter && opt.method == "L-BGFS-B") {
             int.extend <- int.extend + 1
             bound.beta <- bound.beta * 2
-            beta.hat <- optimize(function(beta) robust.optfun.fixtau(beta, tau2.hat),
-                                 bound.beta * c(-1, 1), maximum = TRUE)$maximum
+	    beta.hat <- optim(beta.hat, function(beta) robust.optfun.fixtau(beta, tau2.hat),
+                            method = opt.method, lower = -bound.beta, upper = bound.beta,
+                            control = list(fnscale = -1))$par
+          #  beta.hat <- optim(function(beta) robust.optfun.fixtau(beta, tau2.hat),
+          #                       bound.beta * c(-1, 1), maximum = TRUE)$maximum
         }
         if (int.extend == niter) {
             stop("Failed to find beta.")
