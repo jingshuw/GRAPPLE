@@ -157,9 +157,9 @@ grappleRobustEst <- function(data,
         }
 
         int.extend <- 0
-        while (abs(beta.hat) > 0.95 * bound.beta && int.extend <= niter && opt.method == "L-BGFS-B") {
+        while (any(abs(beta.hat) > 0.95 * bound.beta) && int.extend <= niter && opt.method == "L-BGFS-B") {
             int.extend <- int.extend + 1
-            bound.beta <- bound.beta * 2
+            bound.beta[which(abs(beta.hat) > 0.95 * bound.beta)] <- bound.beta[which(abs(beta.hat) > 0.95 * bound.beta)] * 2
 	    beta.hat <- optim(beta.hat, function(beta) robust.optfun.fixtau(beta, tau2.hat),
                             method = opt.method, lower = -bound.beta, upper = bound.beta,
                             control = list(fnscale = -1))$par
