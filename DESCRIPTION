@@ -1,6 +1,6 @@
 Package: GRAPPLE
 Title: R Package for MR Framework GRAPPLE
-Version: 0.2.1
+Version: 0.2.2
 Authors@R: c(person("Jingshu", "Wang", email = "jingshuw@uchicago.edu", role = c("aut", "cre")), person("Qingyuan", "Zhao", email = "qyzhao@statslab.cam.ac.uk", role = c("aut")))
 Description: Fitting and diagnosing two-sample summary data Mendelian randomization with heterogeneous instruments.
 Depends:
