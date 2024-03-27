@@ -15,7 +15,7 @@ library(devtools)
 install_github("jingshuw/grapple")
 ```
 
-One may also need to install [PLINK](https://www.cog-genomics.org/plink/) for LD clumping, and prepare a suitable LD clumping reference dataset for PLINK, if he/she requires GRAPPLE to perform data preprocessing. One resource of the reference dataset of the European population for clumping, which is also used in the GRAPPLE paper, is the 1000 genome European reference panel downloaded here http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz, from the [MRCIEU cite](https://github.com/MRCIEU/gwas2vcf).
+One may also need to install [PLINK](https://www.cog-genomics.org/plink/) for LD clumping, and prepare a suitable LD clumping reference dataset for PLINK, if he/she requires GRAPPLE to perform data preprocessing. One resource of the reference dataset of the European population for clumping, which is also used in the GRAPPLE paper, is the 1000 genome European reference panel downloaded here http://fileserve.mrcieu.ac.uk/ld/data_maf0.01_rs_ref.tgz, from the [MRCIEU cite](https://github.com/mrcieu/gwasglue?tab=readme-ov-file#reference-datasets).
 
 ## Input Datasets
 
