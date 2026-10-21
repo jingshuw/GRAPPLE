@@ -325,10 +325,10 @@ rho.tukey <- function(r, k = 4.685, deriv = 0) {
     if (deriv == 0) {
         pmin(1 - (1 - (r/k)^2)^3, 1)
     } else if (deriv == 1) {
-        r * (1 - (r / k)^2)^2 * (abs(r) <= k)
+        6 / k^2 * r * (1 - (r / k)^2)^2 * (abs(r) <= k)
     } else if (deriv == 2) {
         t <- (r/k)^2
-        ifelse(t < 1, (1 - t) * (1 - 5 * t), 0)
+        6 / k^2 * ifelse(t < 1, (1 - t) * (1 - 5 * t), 0)
     } else {
 		stop("Higher order derivatives not implemented")
 	}

@@ -17,4 +17,6 @@ Imports:
     ggrepel,
     dplyr,
     tools
+Suggests:
+    testthat
 RoxygenNote: 7.1.1
